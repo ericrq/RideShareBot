@@ -37,7 +37,5 @@ class InsertData:
         # connection commit
         self.bd.connection.commit()
 
-        print("Data inserted successfully")
-
         # close connection
         self.bd.close()

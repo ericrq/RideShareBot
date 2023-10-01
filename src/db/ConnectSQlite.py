@@ -3,9 +3,9 @@ from db.CreateTable import CreateTable
 
 # class for connect in database
 class ConnectSQlite:
-    def __init__(self, db_file):
+    def __init__(self, dbFile):
         # create and connection file .sqlite in src/db
-        self.connection = sqlite3.connect('src/db/' + db_file)
+        self.connection = sqlite3.connect('src/db/' + dbFile)
 
         # create cursor
         self.cursor = self.connection.cursor()
