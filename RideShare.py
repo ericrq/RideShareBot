@@ -1,13 +1,19 @@
 import discord
 from SelectUIComponets import SelectUIComponets
 from ConnectSQlite import ConnectSQlite
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 intents = discord.Intents.default()
 intents.message_content = True
 
 client = discord.Client(intents=intents)
 
-channel = 1157069119917674496
+DiscordChannelId = os.getenv('DiscordChannelId')
+
+channel = (int(DiscordChannelId))
 
 registerData = {
         "date" : "",
@@ -68,8 +74,10 @@ def insertData(registerData):
 
     bd.connection.commit()
 
-    
+
 
     bd.close()
 
-client.run('MTE1NzA2NTcyMTY5MjU1NzMyMw.GADmnz.6fS1PKyg3unO_C9czR5JXPxd25si_Bqjih3uOs')
+DiscordApiKey = os.getenv('DiscordApiKey')
+
+client.run(DiscordApiKey)
