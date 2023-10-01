@@ -12,6 +12,15 @@ class SelectUIComponets:
             "Felipe Santos",
         ]
 
+        self.createDates()
+
+        self.viewDate = self.createViewDateSelect()
+
+        self.viewGoingDrive = self.createViewGoingDriveSelect()
+
+        self.viewReturnDrive = self.createViewReturnDriveSelect()
+
+    def createDates(self):
         self.today = datetime.date.today()
 
         self.firstDayOfMonth = self.today.replace(day=1)
@@ -20,12 +29,6 @@ class SelectUIComponets:
 
         # Crie uma lista de datas uteis formatadas
         self.dates = [dia.strftime("%d/%m/%Y") for dia in (self.firstDayOfMonth + datetime.timedelta(days=d) for d in range((self.lastDayOfMonth - self.firstDayOfMonth).days + 1)) if dia.weekday() < 5]
-
-        self.viewDate = self.createViewDateSelect()
-
-        self.viewGoingDrive = self.createViewGoingDriveSelect()
-
-        self.viewReturnDrive = self.createViewReturnDriveSelect()
 
     def createViewDateSelect(self):
         self.datesSelect = discord.ui.Select(
