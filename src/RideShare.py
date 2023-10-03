@@ -1,9 +1,13 @@
 import discord
 from components.SelectUIComponets import SelectUIComponets
-from db.InsertUpdateData import InsertData
-from db.ConnectSQlite import ConnectSQlite
 from dotenv import load_dotenv
 import os
+
+from db.crud.Connection import Connection
+from db.crud.Insert import Insert
+from db.crud.Update import Update
+from db.crud.CreateTable import CreateTable
+from db.crud.SelectWhere import SelectWhere
 
 # load environment variables
 load_dotenv()
@@ -11,15 +15,18 @@ load_dotenv()
 # class RideShare for create bot
 class RideShare(discord.Client):
     # constructor
-    def __init__(self, intents, channel, registerData, dbFile, ApiKey):
+    def __init__(self, intents, channel, registerData, pathBD, ApiKey):
         # call constructor of class discord.Client
         super().__init__(intents=intents)
 
         # create variables for class
         self.channel = channel
         self.registerData = registerData
-        self.dbFile = dbFile
+        self.pathBD = pathBD
         self.ApiKey = ApiKey
+        self.cursor = Connection(self.pathBD).getCursor()
+        # create table RideShare calling class CreateTable passing table, columns, cursor
+        self.table = CreateTable('RideShare', 'RideShareDate TEXT, goingDrive TEXT, returnDrive TEXT', self.cursor)
 
     # method for run bot
     async def on_ready(self):
@@ -42,7 +49,7 @@ class RideShare(discord.Client):
         if isinstance(interaction, discord.Interaction):
             # if interaction.data['custom_id'] is equal to datesSelect, goingDriveSelect, returnDriveSelect, get values
             if interaction.data['custom_id'] == 'datesSelect':
-                self.registerData['date'] = interaction.data['values'][0]
+                self.registerData['RideShareDate'] = interaction.data['values'][0]
 
             elif interaction.data['custom_id'] == 'goingDriveSelect':
                 self.registerData['goingDrive'] = interaction.data['values'][0]
@@ -50,8 +57,45 @@ class RideShare(discord.Client):
             elif interaction.data['custom_id'] == 'returnDriveSelect':
                 self.registerData['returnDrive'] = interaction.data['values'][0]
 
-        # call class InsertData passing and create db file and insert data
-        InsertData(ConnectSQlite(db_file=self.dbFile)).insertData(self.registerData)
+        self.formatData()
+
+    def formatData(self):
+        # if registerData is not empty, call method insertData or updateData
+        if self.registerData['RideShareDate'] != "" and self.registerData['goingDrive'] != "" and self.registerData['returnDrive'] != "":
+            # select data in table RideShare calling class SelectWhere passing table, columns, cursor, whereColumn, whereValue
+            selectData = SelectWhere(
+                table='RideShare',
+                cursor=self.cursor,
+                whereColumn='RideShareDate',
+                whereValue=f"'{self.registerData['RideShareDate']}'"
+            ).getSelectWhere()
+
+            # if selectData is equal to [] means that data not exists in table RideShare then insert data else update data
+            if selectData == []:
+                self.insertData()
+            else:
+                self.updateData()
+
+
+    def insertData(self):
+        # insert data in table RideShare calling class Insert passing table, columns, values, cursor
+        Insert(
+            table='RideShare',
+            columns='RideShareDate, goingDrive, returnDrive',
+            values=f"'{self.registerData['RideShareDate']}', '{self.registerData['goingDrive']}', '{self.registerData['returnDrive']}'",
+            cursor=self.cursor
+        )
+
+    def updateData(self):
+        # update data in table RideShare calling class Insert passing table, columns, values, cursor
+        Update(
+            table='RideShare',
+            columns='RideShareDate, goingDrive, returnDrive',
+            values=f"'{self.registerData['RideShareDate']}', '{self.registerData['goingDrive']}', '{self.registerData['returnDrive']}'",
+            cursor=self.cursor,
+            whereColumn='RideShareDate',
+            whereValue=f"'{self.registerData['RideShareDate']}'"
+        )
 
 # main function
 if __name__ == '__main__':
@@ -69,15 +113,16 @@ if __name__ == '__main__':
 
     # create variable for register data
     registerData = {
-        "date" : "",
+        "RideShareDate" : "",
         "goingDrive" : "",
-        "returnDrive" : "",
-        "totalSeats" : ""
+        "returnDrive" : ""
     }
 
     # get discord api key
     DiscordApiKey = os.getenv('DiscordApiKey')
 
-    # create object for class RideShare passing intents, channel, registerData, dbFile, ApiKey
-    client = RideShare(intents, channel, registerData, 'RideShare.sqlite', DiscordApiKey)
+    # create object for class RideShare passing intents, channel, registerData, pathBD, ApiKey
+    client = RideShare(intents, channel, registerData, 'src/db/RideShare.sqlite', DiscordApiKey)
+    
+    # run bot
     client.run(DiscordApiKey)
