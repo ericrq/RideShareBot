@@ -1,8 +1,10 @@
 import datetime
 import discord
+import calendar
+import locale
 
 # class of select ui componets
-class SelectUIComponets:
+class SelectUIComponets():
     def __init__(self, channel, client):
         '''
         channel: channel id
@@ -14,16 +16,25 @@ class SelectUIComponets:
 
         # create list of drivers
         self.driver = [
-            "Gabriel Rotine",
+            "Gabriel Rottine",
             "Rafael Zanon",
-            "Arthur Ferreto",
+            "Artur Ferreto",
             "Felipe Santos",
         ]
+        
+        # define locale for language month get by calendar.month_name
+        locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+
+        # create list of all months
+        self.months = [calendar.month_name[month] for month in range(1, 13)]
+        
+        # create views of select month
+        self.viewMonth = self.createViewMonthSelect()
 
         # create dates
         self.createDates()
 
-        # create views of select
+        # create views of select date
         self.viewDate = self.createViewDateSelect()
 
         # create views of going drive select
@@ -45,6 +56,47 @@ class SelectUIComponets:
 
         # create list of dates of month
         self.dates = [dia.strftime("%d/%m/%Y") for dia in (self.firstDayOfMonth + datetime.timedelta(days=d) for d in range((self.lastDayOfMonth - self.firstDayOfMonth).days + 1)) if dia.weekday() < 5]
+
+    def createViewMonthSelect(self):
+        # create select of return month
+        self.monthSelect = discord.ui.Select(
+            custom_id="MonthSelect",
+            placeholder="Mês Que Deseja Registrar",
+            options=[discord.SelectOption(label=month) for month in self.months]
+        )
+
+        # create view
+        self.viewMonth = discord.ui.View()
+
+        # add select to view
+        self.viewMonth.add_item(self.monthSelect)
+
+        self.monthSelect.callback = self.onMonthSelect
+
+        # return view
+        return self.viewMonth
+
+    async def onMonthSelect(self, interaction):
+            # get selected month in select component
+            selectedMonth = interaction.data['values'][0]
+            
+            # transform month name in number
+            selectedMonthNuber = self.months.index(selectedMonth) + 1
+
+            # get first day of month
+            self.firstDayOfMonth = self.today.replace(day=1,month=selectedMonthNuber)
+
+            # get last day of month
+            self.lastDayOfMonth = (self.firstDayOfMonth.replace(month=self.firstDayOfMonth.month % 12 + 1, year=self.firstDayOfMonth.year + (1 if self.firstDayOfMonth.month == 12 else 0)) - datetime.timedelta(days=1))
+
+            # get all dates of month
+            self.dates = [dia.strftime("%d/%m/%Y") for dia in (self.firstDayOfMonth + datetime.timedelta(days=d) for d in range((self.lastDayOfMonth - self.firstDayOfMonth).days + 1)) if dia.weekday() < 5]
+
+            # edit view of date select
+            self.viewDate.clear_items()
+
+            # call method editViewDate for edit view of date select
+            await self.editViewDate()
 
     # create views of select
     def createViewDateSelect(self):
@@ -100,9 +152,42 @@ class SelectUIComponets:
         # return view
         return self.viewReturnDrive
 
-    # send views date to channel
+    # send views return month to channel
+    async def sendViewMonth(self):
+        await self.channel.send(content="-----------------------------------------------------------------", view=self.viewMonth)
+
+    #  edit view of date select
+    async def editViewDate(self):
+        # get last 4 messages of channel
+        messages = []
+        async for message in self.channel.history(limit=4):
+            messages.append(message)
+
+        # get message id date select
+        messageDateSelectId = messages[2].id
+
+        # fetch message by id
+        messageDateSelect = await self.channel.fetch_message(messageDateSelectId)
+
+        # create select of dates
+        self.datesSelect = discord.ui.Select(
+            custom_id="datesSelect",
+            placeholder="Selecione a data",
+            options=[discord.SelectOption(label=date) for date in self.dates]
+        )
+
+        # create view
+        self.viewDate = discord.ui.View()
+
+        # add select to view
+        self.viewDate.add_item(self.datesSelect)
+
+        # edit view of date select
+        await messageDateSelect.edit(view=self.viewDate)
+
+    # send views return date to channel
     async def sendViewDate(self):
-        await self.channel.send(content="-----------------------------------------------------------------",view=self.viewDate)
+        await self.channel.send(view=self.viewDate)
 
     # send views going drive to channel
     async def sendViewGoingDrive(self):

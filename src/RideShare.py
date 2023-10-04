@@ -26,7 +26,7 @@ class RideShare(discord.Client):
         self.ApiKey = ApiKey
         self.cursor = Connection(self.pathBD).getCursor()
         # create table RideShare calling class CreateTable passing table, columns, cursor
-        self.table = CreateTable('RideShare', 'RideShareDate TEXT, goingDrive TEXT, returnDrive TEXT', self.cursor)
+        CreateTable('RideShare', 'RideShareDate TEXT, goingDrive TEXT, returnDrive TEXT', self.cursor)
 
     # method for run bot
     async def on_ready(self):
@@ -36,6 +36,7 @@ class RideShare(discord.Client):
         selectUIComponets =  SelectUIComponets(self.channel, self)
 
         # send view for select ui componets
+        await selectUIComponets.sendViewMonth()
         await selectUIComponets.sendViewDate()
         await selectUIComponets.sendViewGoingDrive()
         await selectUIComponets.sendViewReturnDrive()
@@ -57,9 +58,13 @@ class RideShare(discord.Client):
             elif interaction.data['custom_id'] == 'returnDriveSelect':
                 self.registerData['returnDrive'] = interaction.data['values'][0]
 
-        self.formatData()
+        # set getChannel for get channel method
+        self.getChannel = self.get_channel(self.channel)
 
-    def formatData(self):
+        # call method formatData
+        await self.formatData()
+
+    async def formatData(self):
         # if registerData is not empty, call method insertData or updateData
         if self.registerData['RideShareDate'] != "" and self.registerData['goingDrive'] != "" and self.registerData['returnDrive'] != "":
             # select data in table RideShare calling class SelectWhere passing table, columns, cursor, whereColumn, whereValue
@@ -72,30 +77,41 @@ class RideShare(discord.Client):
 
             # if selectData is equal to [] means that data not exists in table RideShare then insert data else update data
             if selectData == []:
-                self.insertData()
+                await self.insertData()
             else:
-                self.updateData()
+                await self.updateData()
 
+    async def insertData(self):
+        # try insert data in table RideShare calling class Insert passing table, columns, values, cursor
+        try:
+            Insert(
+                table='RideShare',
+                columns='RideShareDate, goingDrive, returnDrive',
+                values=f"'{self.registerData['RideShareDate']}', '{self.registerData['goingDrive']}', '{self.registerData['returnDrive']}'",
+                cursor=self.cursor
+            )
+            # send success message to channel
+            await self.getChannel.send('Registro realizado com sucesso')
+        except:
+            # send error message to channel
+            await self.getChannel.send('Erro ao realizar registro')
 
-    def insertData(self):
-        # insert data in table RideShare calling class Insert passing table, columns, values, cursor
-        Insert(
-            table='RideShare',
-            columns='RideShareDate, goingDrive, returnDrive',
-            values=f"'{self.registerData['RideShareDate']}', '{self.registerData['goingDrive']}', '{self.registerData['returnDrive']}'",
-            cursor=self.cursor
-        )
-
-    def updateData(self):
-        # update data in table RideShare calling class Insert passing table, columns, values, cursor
-        Update(
-            table='RideShare',
-            columns='RideShareDate, goingDrive, returnDrive',
-            values=f"'{self.registerData['RideShareDate']}', '{self.registerData['goingDrive']}', '{self.registerData['returnDrive']}'",
-            cursor=self.cursor,
-            whereColumn='RideShareDate',
-            whereValue=f"'{self.registerData['RideShareDate']}'"
-        )
+    async def updateData(self):
+        # try update data in table RideShare calling class Insert passing table, columns, values, cursor
+        try:
+            Update(
+                table='RideShare',
+                columns='RideShareDate, goingDrive, returnDrive',
+                values=f"'{self.registerData['RideShareDate']}', '{self.registerData['goingDrive']}', '{self.registerData['returnDrive']}'",
+                cursor=self.cursor,
+                whereColumn='RideShareDate',
+                whereValue=f"'{self.registerData['RideShareDate']}'"
+            )
+            # send success message to channel
+            await self.getChannel.send('Registro atualizado com sucesso')
+        except:
+            # send error message to channel
+            await self.getChannel.send('Erro ao atualizar registro')
 
 # main function
 if __name__ == '__main__':
