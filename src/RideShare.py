@@ -1,13 +1,38 @@
+# import discord library
 import discord
-from components.SelectUIComponets import SelectUIComponets
+
+# import dotenv library
 from dotenv import load_dotenv
+
+# import os library
 import os
 
+# import select ui componets
+from components.SelectUIComponets import SelectUIComponets
+
+# import button ui components
+from components.ButtonGetResult import ButtonUIComponents
+
+# import crud connections
 from db.crud.Connection import Connection
+
+# import crud insert
 from db.crud.Insert import Insert
+
+# import crud update
 from db.crud.Update import Update
+
+# import crud create table
 from db.crud.CreateTable import CreateTable
+
+# import crud select where
 from db.crud.SelectWhere import SelectWhere
+
+# import crud delete by where
+from db.crud.DeleteByWhere import DeleteByWhere
+
+# import logic operations
+from logic.CalculateTotalPerDriver import CalulateTotalPerDriver
 
 # load environment variables
 load_dotenv()
@@ -25,29 +50,88 @@ class RideShare(discord.Client):
         self.pathBD = pathBD
         self.ApiKey = ApiKey
         self.cursor = Connection(self.pathBD).getCursor()
+
         # create table RideShare calling class CreateTable passing table, columns, cursor
         CreateTable('RideShare', 'RideShareDate TEXT, goingDrive TEXT, returnDrive TEXT', self.cursor)
 
     # method for run bot
     async def on_ready(self):
-        print(f'Logged in as {self.user}')
-
         # create object for select ui componets
-        selectUIComponets =  SelectUIComponets(self.channel, self)
+        self.selectUIComponets =  SelectUIComponets(self.channel, self)
+
+        # create object for button ui components
+        self.buttonUIComponents = ButtonUIComponents(self.channel, self)
 
         # send view for select ui componets
-        await selectUIComponets.sendViewMonth()
-        await selectUIComponets.sendViewDate()
-        await selectUIComponets.sendViewGoingDrive()
-        await selectUIComponets.sendViewReturnDrive()
+        await self.selectUIComponets.sendViewMonth()
+        await self.selectUIComponets.sendViewDate()
+        await self.selectUIComponets.sendViewGoingDrive()
+        await self.selectUIComponets.sendViewReturnDrive()
+
+        # call class for get result
+        await self.buttonUIComponents.sendButtons()
 
     # method for get interaction
     async def on_interaction(self, interaction):
+
+        # call method onChargeSelects
+        await self.onChargeSelects(interaction)
+
+        # call method onButtonClick
+        await self.onButtonClick(interaction)
+
+        # set getChannel for get channel method
+        self.getChannel = self.get_channel(self.channel)
+
+        # call method formatData
+        await self.formatData()
+
+    # on button click method
+    async def onButtonClick(self, interaction):
+
+        # if interaction is instance of discord.Interaction
+        if isinstance(interaction, discord.Interaction):
+            # if interaction.data['custom_id'] is equal to buttonGetResult
+
+            if interaction.data['custom_id'] == 'buttonGetResult':
+
+                # call class for calculate total per driver
+                calulateTotalPerDriver = CalulateTotalPerDriver(self.cursor, self.channel, self)
+
+                await calulateTotalPerDriver.sendSelectTotalPerDriverFormatTable()
+
+            # if interaction.data['custom_id'] is equal to buttonDeleteRegisterByDate
+            elif interaction.data['custom_id'] == 'buttonDeleteRegisterByDate':
+
+                # get date by delete
+                DateByDelete = self.registerData['RideShareDate']
+
+                # try delete data in table RideShare calling class DeleteByWhere passing table, cursor, whereColumn, whereValue
+                try:
+                    DeleteByWhere(
+                        table='RideShare',
+                        cursor=self.cursor,
+                        whereColumn='RideShareDate',
+                        whereValue=f"'{DateByDelete}'"
+                    )
+
+                    # send success message to channel
+                    await self.getChannel.send('Registro deletado com sucesso', delete_after=5)
+
+                # except error
+                except:
+                    # send error message to channel
+                    await self.getChannel.send('Erro ao deletar registro' , delete_after=5)
+
+    # on charge selects method
+    async def onChargeSelects(self, interaction):
+
         # if interaction is instance of discord.Interaction, defer interaction, remove error message
         await interaction.response.defer()
 
         # if interaction is instance of discord.Interaction, get data
         if isinstance(interaction, discord.Interaction):
+
             # if interaction.data['custom_id'] is equal to datesSelect, goingDriveSelect, returnDriveSelect, get values
             if interaction.data['custom_id'] == 'datesSelect':
                 self.registerData['RideShareDate'] = interaction.data['values'][0]
@@ -58,15 +142,11 @@ class RideShare(discord.Client):
             elif interaction.data['custom_id'] == 'returnDriveSelect':
                 self.registerData['returnDrive'] = interaction.data['values'][0]
 
-        # set getChannel for get channel method
-        self.getChannel = self.get_channel(self.channel)
-
-        # call method formatData
-        await self.formatData()
-
     async def formatData(self):
+
         # if registerData is not empty, call method insertData or updateData
         if self.registerData['RideShareDate'] != "" and self.registerData['goingDrive'] != "" and self.registerData['returnDrive'] != "":
+
             # select data in table RideShare calling class SelectWhere passing table, columns, cursor, whereColumn, whereValue
             selectData = SelectWhere(
                 table='RideShare',
@@ -82,6 +162,7 @@ class RideShare(discord.Client):
                 await self.updateData()
 
     async def insertData(self):
+
         # try insert data in table RideShare calling class Insert passing table, columns, values, cursor
         try:
             Insert(
@@ -90,13 +171,18 @@ class RideShare(discord.Client):
                 values=f"'{self.registerData['RideShareDate']}', '{self.registerData['goingDrive']}', '{self.registerData['returnDrive']}'",
                 cursor=self.cursor
             )
+
             # send success message to channel
-            await self.getChannel.send('Registro realizado com sucesso')
+            await self.getChannel.send('Registro realizado com sucesso', delete_after=5)
+
+        # except error
         except:
+
             # send error message to channel
-            await self.getChannel.send('Erro ao realizar registro')
+            await self.getChannel.send('Erro ao realizar registro' , delete_after=5)
 
     async def updateData(self):
+
         # try update data in table RideShare calling class Insert passing table, columns, values, cursor
         try:
             Update(
@@ -108,13 +194,16 @@ class RideShare(discord.Client):
                 whereValue=f"'{self.registerData['RideShareDate']}'"
             )
             # send success message to channel
-            await self.getChannel.send('Registro atualizado com sucesso')
+            await self.getChannel.send('Registro atualizado com sucesso', delete_after=5)
+        
+        # except error
         except:
             # send error message to channel
-            await self.getChannel.send('Erro ao atualizar registro')
+            await self.getChannel.send('Erro ao atualizar registro', delete_after=5)
 
 # main function
 if __name__ == '__main__':
+
     # create variable for intents
     intents = discord.Intents.default()
 

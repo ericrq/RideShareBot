@@ -1,3 +1,4 @@
+# import sqlite3 library
 import sqlite3
 
 # class connection database sqlite3

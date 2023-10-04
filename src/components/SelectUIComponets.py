@@ -1,10 +1,18 @@
-import datetime
+# import discord library
 import discord
+
+# import calendar library
 import calendar
+
+# import locale library
 import locale
+
+# import datetime library
+import datetime
 
 # class of select ui componets
 class SelectUIComponets():
+    # constructor
     def __init__(self, channel, client):
         '''
         channel: channel id
@@ -19,7 +27,7 @@ class SelectUIComponets():
             "Gabriel Rottine",
             "Rafael Zanon",
             "Artur Ferreto",
-            "Felipe Santos",
+            "Felipe Dos Santos",
         ]
         
         # define locale for language month get by calendar.month_name
@@ -154,7 +162,7 @@ class SelectUIComponets():
 
     # send views return month to channel
     async def sendViewMonth(self):
-        await self.channel.send(content="-----------------------------------------------------------------", view=self.viewMonth)
+        await self.channel.send(f"Selecione o mês que deseja registrar", view=self.viewMonth)
 
     #  edit view of date select
     async def editViewDate(self):
@@ -164,7 +172,7 @@ class SelectUIComponets():
             messages.append(message)
 
         # get message id date select
-        messageDateSelectId = messages[2].id
+        messageDateSelectId = messages[3].id
 
         # fetch message by id
         messageDateSelect = await self.channel.fetch_message(messageDateSelectId)
@@ -187,12 +195,12 @@ class SelectUIComponets():
 
     # send views return date to channel
     async def sendViewDate(self):
-        await self.channel.send(view=self.viewDate)
+        await self.channel.send(f"Selecione a data", view=self.viewDate)
 
     # send views going drive to channel
     async def sendViewGoingDrive(self):
-        await self.channel.send(view=self.viewGoingDrive)
+        await self.channel.send(f"Selecione o motorista de ida", view=self.viewGoingDrive)
 
     # send views return drive to channel
     async def sendViewReturnDrive(self):
-        await self.channel.send(view=self.viewReturnDrive)
+        await self.channel.send(f"Slecione o motorista de volta", view=self.viewReturnDrive)
