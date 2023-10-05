@@ -171,11 +171,12 @@ class Selects:
     async def editViewDate(self):
         # get last 4 messages of channel
         messages = []
-        async for message in self.channel.history(limit=4):
+        async for message in self.channel.history(limit=10):
             messages.append(message)
-
-        # get message id date select
-        messageDateSelectId = messages[3].id
+            # if message content is equal to "Selecione a data"
+            if message.content == "Selecione a data":
+                # get id of message
+                messageDateSelectId = message.id
 
         # fetch message by id
         messageDateSelect = await self.channel.fetch_message(messageDateSelectId)
