@@ -104,41 +104,14 @@ class RideShare(discord.Client):
             # if interaction.data['custom_id'] is equal to buttonGetResult
             if interaction.data['custom_id'] == 'buttonGetResult':
 
-                # verify if month is not empty
-                if self.registerData['Month'] != "":
-                    # get month name and number by select
-                    self.month = self.registerData['Month'].split()[1][1:-1]
-                else:
-                    # set month number actual month
-                    self.month = datetime.date.today().month
-
-                # call class for calculate total per driver
-                calulateTotalPerDriver = CalulateTotalPerDriver(self.cursor, self.channel, self, self.month)
-                
-                await calulateTotalPerDriver.sendSelectTotalPerDriverFormatTable()
+                # call method buttonGetResult
+                await self.buttonGetResult()
 
             # if interaction.data['custom_id'] is equal to buttonDeleteRegisterByDate
             elif interaction.data['custom_id'] == 'buttonDeleteRegisterByDate':
 
-                # get date by delete
-                DateByDelete = self.registerData['RideShareDate']
-
-                # try delete data in table RideShare calling class DeleteByWhere passing table, cursor, whereColumn, whereValue
-                try:
-                    DeleteByWhere(
-                        table='RideShare',
-                        cursor=self.cursor,
-                        whereColumn='RideShareDate',
-                        whereValue=f"'{DateByDelete}'"
-                    )
-
-                    # send success message to channel
-                    await self.getChannel.send('Registro deletado com sucesso', delete_after=5)
-
-                # except error
-                except:
-                    # send error message to channel
-                    await self.getChannel.send('Erro ao deletar registro' , delete_after=5)
+                # call method buttonDeleteRegisterByDate
+                await self.buttonDeleteRegisterByDate()
 
     # on charge selects method
     async def onChargeSelects(self, interaction):
@@ -161,6 +134,7 @@ class RideShare(discord.Client):
             elif interaction.data['custom_id'] == 'MonthSelect':
                 self.registerData['Month'] = interaction.data['values'][0]
 
+    # format data method
     async def formatData(self):
 
         # if registerData is not empty, call method insertData or updateData
@@ -180,6 +154,7 @@ class RideShare(discord.Client):
             else:
                 await self.updateData()
 
+    # insert data method
     async def insertData(self):
 
         # try insert data in table RideShare calling class Insert passing table, columns, values, cursor
@@ -200,6 +175,7 @@ class RideShare(discord.Client):
             # send error message to channel
             await self.getChannel.send('Erro ao realizar registro' , delete_after=5)
 
+    # update data method
     async def updateData(self):
 
         # try update data in table RideShare calling class Insert passing table, columns, values, cursor
@@ -219,6 +195,48 @@ class RideShare(discord.Client):
         except:
             # send error message to channel
             await self.getChannel.send('Erro ao atualizar registro', delete_after=5)
+
+    # button get result method
+    async def buttonGetResult(self):
+        # verify if month is not empty
+        if self.registerData['Month'] != "":
+            # get month name and number by select
+            self.month = self.registerData['Month'].split()[1][1:-1]
+        else:
+            # set month number actual month
+            self.month = datetime.date.today().month
+
+        # call class for calculate total per driver
+        calulateTotalPerDriver = CalulateTotalPerDriver(self.cursor, self.channel, self, self.month)
+        
+        await calulateTotalPerDriver.sendSelectTotalPerDriverFormatTable()
+
+    # button delete register by date method
+    async def buttonDeleteRegisterByDate(self):
+
+        # clear registerData for delete register
+        self.registerData['goingDrive'] = ""
+        self.registerData['returnDrive'] = ""
+        
+        # get date by delete
+        DateByDelete = self.registerData['RideShareDate']
+
+        # try delete data in table RideShare calling class DeleteByWhere passing table, cursor, whereColumn, whereValue
+        try:
+            DeleteByWhere(
+                table='RideShare',
+                cursor=self.cursor,
+                whereColumn='RideShareDate',
+                whereValue=f"'{DateByDelete}'"
+            )
+
+            # send success message to channel
+            await self.getChannel.send('Registro deletado com sucesso', delete_after=5)
+
+        # except error
+        except:
+            # send error message to channel
+            await self.getChannel.send('Erro ao deletar registro' , delete_after=5)
 
 # main function
 if __name__ == '__main__':
