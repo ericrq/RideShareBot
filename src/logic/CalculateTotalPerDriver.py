@@ -30,7 +30,7 @@ class CalulateTotalPerDriver:
         # verify if getSelectTotalPerDriver is empty
         if self.getSelectTotalPerDriver == []:
             # send message to channel and delete after 5 seconds
-            await self.channel.send(f'Não há Dados Registrados Para O Mê1s De {calendar.month_name[int(self.month)].capitalize()}', delete_after=5)
+            await self.channel.send(f'Não há Dados Registrados Para O Mês De {calendar.month_name[int(self.month)].capitalize()}', delete_after=5)
             return
 
         # create table format by table2ascii
