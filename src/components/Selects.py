@@ -10,8 +10,17 @@ import locale
 # import datetime library
 import datetime
 
+# import dotenv library
+from dotenv import load_dotenv
+
+# import os library
+import os
+
+# load environment variables
+load_dotenv()
+
 # class of select ui componets
-class SelectUIComponets():
+class Selects:
     # constructor
     def __init__(self, channel, client):
         '''
@@ -23,19 +32,13 @@ class SelectUIComponets():
         self.channel = client.get_channel(channel)
 
         # create list of drivers
-        self.driver = [
-            "Gabriel Rottine",
-            "Rafael Zanon",
-            "Artur Ferreto",
-            "Felipe Dos Santos",
-        ]
+        self.driver = os.getenv('DriverNames').split(',')
         
         # define locale for language month get by calendar.month_name
         locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
-        # create list of all months
-        self.months = [calendar.month_name[month] for month in range(1, 13)]
-        
+        # create list of all months name and number
+        self.months = [f"{calendar.month_name[month]} ({str(month).zfill(2)})" for month in range(1, 13)]
         # create views of select month
         self.viewMonth = self.createViewMonthSelect()
 

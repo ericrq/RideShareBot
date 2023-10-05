@@ -7,11 +7,17 @@ from dotenv import load_dotenv
 # import os library
 import os
 
+# import calendar library
+import datetime
+
+# import locale library
+import locale
+
 # import select ui componets
-from components.SelectUIComponets import SelectUIComponets
+from components.Selects import Selects
 
 # import button ui components
-from components.ButtonGetResult import ButtonUIComponents
+from components.Buttons import Buttons
 
 # import crud connections
 from db.crud.Connection import Connection
@@ -51,25 +57,28 @@ class RideShare(discord.Client):
         self.ApiKey = ApiKey
         self.cursor = Connection(self.pathBD).getCursor()
 
+        # define locale for language month get by calendar.month_name
+        locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+
         # create table RideShare calling class CreateTable passing table, columns, cursor
         CreateTable('RideShare', 'RideShareDate TEXT, goingDrive TEXT, returnDrive TEXT', self.cursor)
 
     # method for run bot
     async def on_ready(self):
         # create object for select ui componets
-        self.selectUIComponets =  SelectUIComponets(self.channel, self)
+        self.Selects =  Selects(self.channel, self)
 
         # create object for button ui components
-        self.buttonUIComponents = ButtonUIComponents(self.channel, self)
+        self.Buttons = Buttons(self.channel, self)
 
         # send view for select ui componets
-        await self.selectUIComponets.sendViewMonth()
-        await self.selectUIComponets.sendViewDate()
-        await self.selectUIComponets.sendViewGoingDrive()
-        await self.selectUIComponets.sendViewReturnDrive()
+        await self.Selects.sendViewMonth()
+        await self.Selects.sendViewDate()
+        await self.Selects.sendViewGoingDrive()
+        await self.Selects.sendViewReturnDrive()
 
         # call class for get result
-        await self.buttonUIComponents.sendButtons()
+        await self.Buttons.sendButtons()
 
     # method for get interaction
     async def on_interaction(self, interaction):
@@ -91,13 +100,21 @@ class RideShare(discord.Client):
 
         # if interaction is instance of discord.Interaction
         if isinstance(interaction, discord.Interaction):
-            # if interaction.data['custom_id'] is equal to buttonGetResult
 
+            # if interaction.data['custom_id'] is equal to buttonGetResult
             if interaction.data['custom_id'] == 'buttonGetResult':
 
-                # call class for calculate total per driver
-                calulateTotalPerDriver = CalulateTotalPerDriver(self.cursor, self.channel, self)
+                # verify if month is not empty
+                if self.registerData['Month'] != "":
+                    # get month name and number by select
+                    self.month = self.registerData['Month'].split()[1][1:-1]
+                else:
+                    # set month number actual month
+                    self.month = datetime.date.today().month
 
+                # call class for calculate total per driver
+                calulateTotalPerDriver = CalulateTotalPerDriver(self.cursor, self.channel, self, self.month)
+                
                 await calulateTotalPerDriver.sendSelectTotalPerDriverFormatTable()
 
             # if interaction.data['custom_id'] is equal to buttonDeleteRegisterByDate
@@ -135,12 +152,14 @@ class RideShare(discord.Client):
             # if interaction.data['custom_id'] is equal to datesSelect, goingDriveSelect, returnDriveSelect, get values
             if interaction.data['custom_id'] == 'datesSelect':
                 self.registerData['RideShareDate'] = interaction.data['values'][0]
-
             elif interaction.data['custom_id'] == 'goingDriveSelect':
                 self.registerData['goingDrive'] = interaction.data['values'][0]
 
             elif interaction.data['custom_id'] == 'returnDriveSelect':
                 self.registerData['returnDrive'] = interaction.data['values'][0]
+
+            elif interaction.data['custom_id'] == 'MonthSelect':
+                self.registerData['Month'] = interaction.data['values'][0]
 
     async def formatData(self):
 
@@ -220,7 +239,8 @@ if __name__ == '__main__':
     registerData = {
         "RideShareDate" : "",
         "goingDrive" : "",
-        "returnDrive" : ""
+        "returnDrive" : "",
+        "Month" : ""
     }
 
     # get discord api key

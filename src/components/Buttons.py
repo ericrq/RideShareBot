@@ -2,7 +2,7 @@
 import discord
 
 # class for create button ui components
-class ButtonUIComponents:
+class Buttons:
     # constructor
     def __init__(self, channel, client):
         '''
