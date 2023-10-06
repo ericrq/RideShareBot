@@ -1,3 +1,12 @@
+# import dotenv library
+from dotenv import load_dotenv
+
+# load environment variables
+load_dotenv()
+
+# import os library
+import os
+
 # class SelectTotalPerDriver for selecting total per driver from database
 class SelectTotalPerDriver:
     # constructor
@@ -5,6 +14,7 @@ class SelectTotalPerDriver:
         # create variables for class
         self.cursor = cursor
         self.month = month
+        self.valuePerDriver = os.getenv("ValuePerDriver")
 
         '''
         cursor: cursor of database
@@ -13,7 +23,7 @@ class SelectTotalPerDriver:
 
         # create variable for select all per driver query
         self.selectTotalPerDriverQuery = f"""
-           SELECT driverName, SUM(count) as totalTimesDirected, SUM(count) * 1.5 as totalPay
+           SELECT driverName, SUM(count) as totalTimesDirected, SUM(count) * {self.valuePerDriver} as totalPay
             FROM (
                 SELECT goingDrive as driverName, COUNT(*) as count
                 FROM RideShare
