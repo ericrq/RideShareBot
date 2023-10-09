@@ -14,6 +14,6 @@
 
 <br>
 
-![beforeAndAfterRegister](assets/img/beforeAndAfterRegister.png)
+![beforeAndAfterRegister](assets/img/beforeAndAfterRegister.svg)
 
 </div>
