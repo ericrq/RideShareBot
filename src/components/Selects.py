@@ -21,6 +21,7 @@ load_dotenv()
 
 # class of select ui componets
 class Selects:
+
     # constructor
     def __init__(self, channel, client):
         '''
@@ -43,8 +44,10 @@ class Selects:
         # create list of last 2 years and current year
         self.years = [str(year) for year in range(datetime.date.today().year - 2, datetime.date.today().year + 1)]
 
+        # get current year and selected year
         self.selectedYear = datetime.date.today().year
 
+        # get current month and selected month
         self.selectedMonthNumber = datetime.date.today().month
 
         # create views of select year
@@ -95,6 +98,7 @@ class Selects:
         # add select to view
         self.viewMonth.add_item(self.monthSelect)
 
+        # callback of select month
         self.monthSelect.callback = self.onMonthSelect
 
         # return view
@@ -154,7 +158,6 @@ class Selects:
 
         # call editViewMonth for edit view of month select
         await self.editViewDate()
-
 
     # create views of select
     def createViewDateSelect(self):
@@ -315,6 +318,7 @@ class Selects:
         # edit view of date select
         await messageDateSelect.edit(view=self.viewDate)
     
+    # get history messages of channel
     async def getMessagesLimit(self):
 
         # set initial limit = 1
@@ -355,20 +359,30 @@ class Selects:
 
     # send views year to channel
     async def sendViewYear(self):
+
+        # send views year and text to channel
         await self.channel.send(f"Selecione O Ano Que Deseja Registrar", view=self.viewYear)
 
     # send views return month to channel
     async def sendViewMonth(self):
+
+        # send views month and text to channel
         await self.channel.send(f"Selecione O mês Que Deseja Registrar", view=self.viewMonth)
 
     # send views return date to channel
     async def sendViewDate(self):
+
+        # send views date and text to channel
         await self.channel.send(f"Selecione A Data Que Deseja Registrar", view=self.viewDate)
 
     # send views going drive to channel
     async def sendViewGoingDrive(self):
+
+        # send views going drive and text to channel
         await self.channel.send(f"Selecione O Motorista De Ida", view=self.viewGoingDrive)
 
     # send views return drive to channel
     async def sendViewReturnDrive(self):
+
+        # send views return drive and text to channel
         await self.channel.send(f"Selecione O Motorista De Volta", view=self.viewReturnDrive)
