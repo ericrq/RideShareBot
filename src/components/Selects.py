@@ -39,6 +39,15 @@ class Selects:
 
         # create list of all months name and number
         self.months = [f"{calendar.month_name[month]} ({str(month).zfill(2)})" for month in range(1, 13)]
+
+        # create list of last 2 years and current year
+        self.years = [str(year) for year in range(datetime.date.today().year - 2, datetime.date.today().year + 1)]
+
+        self.selectedYear = datetime.date.today().year
+
+        # create views of select year
+        self.viewYear = self.createViewYearSelect()
+
         # create views of select month
         self.viewMonth = self.createViewMonthSelect()
 
@@ -56,6 +65,7 @@ class Selects:
 
     # create dates
     def createDates(self):
+
         # get today date
         self.today = datetime.date.today()
         
@@ -68,7 +78,9 @@ class Selects:
         # create list of dates of month
         self.dates = [dia.strftime("%d/%m/%Y") for dia in (self.firstDayOfMonth + datetime.timedelta(days=d) for d in range((self.lastDayOfMonth - self.firstDayOfMonth).days + 1)) if dia.weekday() < 5]
 
+    # create views of select month
     def createViewMonthSelect(self):
+
         # create select of return month
         self.monthSelect = discord.ui.Select(
             custom_id="MonthSelect",
@@ -87,18 +99,20 @@ class Selects:
         # return view
         return self.viewMonth
 
+    # callback of select month
     async def onMonthSelect(self, interaction):
+
             # get selected month in select component
             selectedMonth = interaction.data['values'][0]
             
             # transform month name in number
-            selectedMonthNuber = self.months.index(selectedMonth) + 1
+            selectedMonthNumber = self.months.index(selectedMonth) + 1
 
             # get first day of month
-            self.firstDayOfMonth = self.today.replace(day=1,month=selectedMonthNuber)
+            self.firstDayOfMonth = self.today.replace(day=1,month=selectedMonthNumber)
 
             # get last day of month
-            self.lastDayOfMonth = (self.firstDayOfMonth.replace(month=self.firstDayOfMonth.month % 12 + 1, year=self.firstDayOfMonth.year + (1 if self.firstDayOfMonth.month == 12 else 0)) - datetime.timedelta(days=1))
+            self.lastDayOfMonth = (self.firstDayOfMonth.replace(month=self.firstDayOfMonth.month % 12 + 1, year=(int(self.selectedYear) + 1 if self.firstDayOfMonth.month == 12 else int(self.selectedYear))) - datetime.timedelta(days=1))
 
             # get all dates of month
             self.dates = [dia.strftime("%d/%m/%Y") for dia in (self.firstDayOfMonth + datetime.timedelta(days=d) for d in range((self.lastDayOfMonth - self.firstDayOfMonth).days + 1)) if dia.weekday() < 5]
@@ -109,12 +123,57 @@ class Selects:
             # call method editViewDate for edit view of date select
             await self.editViewDate()
 
+    # callback of select year
+    async def onYearSelect(self, interaction):
+
+        # get selected year in select component
+        self.selectedYear = interaction.data['values'][0]
+
+        # get first day of month and year
+        self.firstDayOfMonth = self.today.replace(day=1, year=int(self.selectedYear))
+
+        # get last day of month and year
+        self.lastDayOfMonth = (self.firstDayOfMonth.replace(month=self.firstDayOfMonth.month % 12 + 1, year=(int(self.selectedYear) + 1 if self.firstDayOfMonth.month == 12 else int(self.selectedYear))) - datetime.timedelta(days=1))
+
+        # get all dates based in selected year and month
+        self.dates = [dia.strftime("%d/%m/%Y") for dia in (self.firstDayOfMonth + datetime.timedelta(days=d) for d in range((self.lastDayOfMonth - self.firstDayOfMonth).days + 1)) if dia.weekday() < 5]
+
+        # clean edit view of date select
+        self.viewDate.clear_items()
+
+        # call editViewMonth for edit view of month select
+        await self.editViewDate()
+
+    # create views of select year
+    def createViewYearSelect(self):
+
+        # create select of return year
+        self.yearSelect = discord.ui.Select(
+            custom_id="YearSelect",
+            placeholder="Ano Que Deseja Registrar",
+            options=[discord.SelectOption(label=year) for year in self.years]
+        )
+
+        # create view
+        self.viewYear = discord.ui.View()
+
+        # add select to view
+        self.viewYear.add_item(self.yearSelect)
+
+        # callback of select year
+        self.yearSelect.callback = self.onYearSelect
+
+        # return view
+        return self.viewYear
+    
+
     # create views of select
     def createViewDateSelect(self):
+
         # create select of dates
         self.datesSelect = discord.ui.Select(
             custom_id="datesSelect",
-            placeholder="Selecione a data",
+            placeholder="Selecione A Data",
             options=[discord.SelectOption(label=date) for date in self.dates]
         )
 
@@ -129,10 +188,11 @@ class Selects:
 
     # create view of going drive select
     def createViewGoingDriveSelect(self):
+
         # create select of going drive
         self.goingDriveSelect = discord.ui.Select(
             custom_id="goingDriveSelect",
-            placeholder="Motorista de ida",
+            placeholder="Motorista De Ida",
             options=[discord.SelectOption(label=drive) for drive in self.driver]
         )
 
@@ -147,10 +207,11 @@ class Selects:
     
     # create view of return drive select
     def createViewReturnDriveSelect(self):
+
         # create select of return drive
         self.returnDriveSelect = discord.ui.Select(
             custom_id="returnDriveSelect",
-            placeholder="Motorista de volta",
+            placeholder="Motorista De Volta",
             options=[discord.SelectOption(label=drive) for drive in self.driver]
         )
 
@@ -162,29 +223,97 @@ class Selects:
 
         # return view
         return self.viewReturnDrive
+    
+    # edit view of going drive select use in buttonDeleteRegisterByDate
+    async def editViewGoingDrive(self):
 
-    # send views return month to channel
-    async def sendViewMonth(self):
-        await self.channel.send(f"Selecione o mês que deseja registrar", view=self.viewMonth)
+        # call method getMessagesLimit for get messages of channel
+        messages = await self.getMessagesLimit()
+
+        # loop in messages of channel
+        for message in messages:
+
+            # verify if message content is equal to "Selecione O Motorista De Ida"
+            if message.content == "Selecione O Motorista De Ida":
+
+                # set message id in variable
+                messageGoingDriveId = message.id
+
+        # fetch message by id
+        messageGoingDrive = await self.channel.fetch_message(messageGoingDriveId)
+
+        # create select of going drive
+        self.goingDriveSelect = discord.ui.Select(
+            custom_id="goingDriveSelect",
+            placeholder="Motorista De Ida",
+            options=[discord.SelectOption(label=drive) for drive in self.driver]
+        )
+
+        # create view
+        self.viewGoingDrive = discord.ui.View()
+
+        # add select to view
+        self.viewGoingDrive.add_item(self.goingDriveSelect)
+
+        # edit view of going drive select
+        await messageGoingDrive.edit(view=self.viewGoingDrive)
+
+    # edit view of return drive select use in buttonDeleteRegisterByDate
+    async def editViewReturnDrive(self):
+
+        # call method getMessagesLimit for get messages of channel
+        messages = await self.getMessagesLimit()
+
+        # loop in messages of channel
+        for message in messages:
+
+            # verify if message content is equal to "Selecione O Motorista De Volta"
+            if message.content == "Selecione O Motorista De Volta":
+
+                # set message id in variable
+                messageReturnDriveId = message.id
+
+        # fetch message by id
+        messageReturnDrive = await self.channel.fetch_message(messageReturnDriveId)
+
+        # create select of return drive
+        self.returnDriveSelect = discord.ui.Select(
+            custom_id="returnDriveSelect",
+            placeholder="Motorista De Volta",
+            options=[discord.SelectOption(label=drive) for drive in self.driver]
+        )
+
+        # create view
+        self.viewReturnDrive = discord.ui.View()
+
+        # add select to view
+        self.viewReturnDrive.add_item(self.returnDriveSelect)
+
+        # edit view of return drive select
+        await messageReturnDrive.edit(view=self.viewReturnDrive)
 
     #  edit view of date select
     async def editViewDate(self):
-        # get last 4 messages of channel
-        messages = []
-        async for message in self.channel.history(limit=10):
-            messages.append(message)
-            # if message content is equal to "Selecione a data"
-            if message.content == "Selecione a data":
-                # get id of message
-                messageDateSelectId = message.id
+
+        # call method getMessagesLimit for get messages of channel
+        messages = await self.getMessagesLimit()
+
+        # loop in messages of channel
+        for message in messages:
+
+            # verify if message content is equal to "Selecione A Data Que Deseja Registrar"
+            if message.content == "Selecione A Data Que Deseja Registrar":
+
+                # set message id in variable
+                messageDateId = message.id
 
         # fetch message by id
-        messageDateSelect = await self.channel.fetch_message(messageDateSelectId)
+        messageDateSelect = await self.channel.fetch_message(messageDateId)
 
         # create select of dates
         self.datesSelect = discord.ui.Select(
             custom_id="datesSelect",
-            placeholder="Selecione a data",
+            placeholder="Selecione A Data",
             options=[discord.SelectOption(label=date) for date in self.dates]
         )
 
@@ -196,15 +325,61 @@ class Selects:
 
         # edit view of date select
         await messageDateSelect.edit(view=self.viewDate)
+    
+    async def getMessagesLimit(self):
+
+        # set initial limit = 1
+        limit = 1
+
+        # set condition = True
+        condition = True
+
+        # create list of messages
+        messages = []
+
+        # while condition is True
+        while condition:
+
+            # get messages of channel by limit
+            async for message in self.channel.history(limit=limit):
+                
+                # if message content is equal to "Selecione o ano que deseja registrar"
+                if message.content == "Selecione O Ano Que Deseja Registrar":
+
+                    # set condition = False
+                    condition = False
+                    
+                    # break loop
+                    break
+
+            # increment limit
+            limit += 1
+
+        # get messages of channel by limit
+        async for message in self.channel.history(limit=limit):
+
+            # append message in list of messages
+            messages.append(message)
+
+        # return list of messages
+        return messages
+
+    # send views year to channel
+    async def sendViewYear(self):
+        await self.channel.send(f"Selecione O Ano Que Deseja Registrar", view=self.viewYear)
+
+    # send views return month to channel
+    async def sendViewMonth(self):
+        await self.channel.send(f"Selecione O mês Que Deseja Registrar", view=self.viewMonth)
 
     # send views return date to channel
     async def sendViewDate(self):
-        await self.channel.send(f"Selecione a data", view=self.viewDate)
+        await self.channel.send(f"Selecione A Data Que Deseja Registrar", view=self.viewDate)
 
     # send views going drive to channel
     async def sendViewGoingDrive(self):
-        await self.channel.send(f"Selecione o motorista de ida", view=self.viewGoingDrive)
+        await self.channel.send(f"Selecione O Motorista De Ida", view=self.viewGoingDrive)
 
     # send views return drive to channel
     async def sendViewReturnDrive(self):
-        await self.channel.send(f"Slecione o motorista de volta", view=self.viewReturnDrive)
+        await self.channel.send(f"Selecione O Motorista De Volta", view=self.viewReturnDrive)

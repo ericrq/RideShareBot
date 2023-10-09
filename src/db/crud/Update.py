@@ -1,7 +1,9 @@
 # class Update for update data in table
 class Update:
+
     # constructor
     def __init__(self, table, columns, values, cursor, whereColumn, whereValue):
+
         # create variables for class
         self.table = table
         self.columns = columns

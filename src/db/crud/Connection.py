@@ -3,6 +3,7 @@ import sqlite3
 
 # class connection database sqlite3
 class Connection:
+
     # constructor
     def __init__(self, pathDB):
 
@@ -21,4 +22,6 @@ class Connection:
 
     # get connection cursor
     def getCursor(self):
+
+        # return cursor of connection
         return self.cursor

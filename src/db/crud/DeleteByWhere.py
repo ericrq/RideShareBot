@@ -1,7 +1,9 @@
 # class for delete by where
 class DeleteByWhere:
+
     # constructor
     def __init__(self, table, cursor, whereColumn, whereValue):
+
         # create variables for class
         self.cursor = cursor
         self.table = table

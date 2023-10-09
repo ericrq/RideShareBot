@@ -15,6 +15,7 @@ class Buttons:
 
     # method for create button get result
     def createButtonGetResult(self):
+
         # create button get result
         self.buttonGetResult = discord.ui.Button(
             style=discord.ButtonStyle.green,
@@ -28,6 +29,7 @@ class Buttons:
     
     # method for create button delete register by date
     def createButtonDeleteRegisterByDate(self):
+
         # create button delete register by date
         self.buttonDeleteRegisterByDate = discord.ui.Button(
             style=discord.ButtonStyle.red,
@@ -41,6 +43,7 @@ class Buttons:
     
     # send buttons side by side
     async def sendButtons(self):
+
         # create view
         self.viewSendButtons = discord.ui.View()
 

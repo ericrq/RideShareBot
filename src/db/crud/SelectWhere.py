@@ -1,7 +1,9 @@
 # class SelectWhere  for select data from database with where
 class SelectWhere:
+
     # constructor
     def __init__(self, table, cursor, whereColumn, whereValue):
+
         # create variables for class
         self.table = table
         self.cursor = cursor
@@ -24,5 +26,6 @@ class SelectWhere:
 
     # get select where
     def getSelectWhere(self):
+
         # return data
         return self.cursor.fetchall()

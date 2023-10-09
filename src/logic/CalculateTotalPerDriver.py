@@ -9,8 +9,10 @@ import calendar
 
 # class CalulateTotalPerDriver for calculate total per driver
 class CalulateTotalPerDriver:
+
     # constructor
     def __init__(self, cursor, channel, client, month):
+
         # create variables for class
         self.cursor = cursor
         self.channel = client.get_channel(channel)
@@ -27,8 +29,10 @@ class CalulateTotalPerDriver:
 
     # method for send table of total per driver
     async def sendSelectTotalPerDriverFormatTable(self):
+
         # verify if getSelectTotalPerDriver is empty
         if self.getSelectTotalPerDriver == []:
+
             # send message to channel and delete after 5 seconds
             await self.channel.send(f'Não há Dados Registrados Para O Mês De {calendar.month_name[int(self.month)].capitalize()}', delete_after=5)
             return
@@ -44,7 +48,6 @@ class CalulateTotalPerDriver:
             alignments=[Alignment.LEFT, Alignment.CENTER, Alignment.CENTER],
             cell_padding=1
         )
-
 
         # send table format to channel
         await self.channel.send(f'```\t\t\t\tTabela Relativa Ao Mes De {calendar.month_name[int(self.month)].capitalize()}\n{formatTable}```')

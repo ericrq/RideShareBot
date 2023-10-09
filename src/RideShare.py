@@ -45,8 +45,10 @@ load_dotenv()
 
 # class RideShare for create bot
 class RideShare(discord.Client):
+
     # constructor
     def __init__(self, intents, channel, registerData, pathBD, ApiKey):
+
         # call constructor of class discord.Client
         super().__init__(intents=intents)
 
@@ -65,6 +67,7 @@ class RideShare(discord.Client):
 
     # method for run bot
     async def on_ready(self):
+
         # create object for select ui componets
         self.Selects =  Selects(self.channel, self)
 
@@ -72,6 +75,7 @@ class RideShare(discord.Client):
         self.Buttons = Buttons(self.channel, self)
 
         # send view for select ui componets
+        await self.Selects.sendViewYear()
         await self.Selects.sendViewMonth()
         await self.Selects.sendViewDate()
         await self.Selects.sendViewGoingDrive()
@@ -188,6 +192,7 @@ class RideShare(discord.Client):
                 whereColumn='RideShareDate',
                 whereValue=f"'{self.registerData['RideShareDate']}'"
             )
+
             # send success message to channel
             await self.getChannel.send('Registro atualizado com sucesso', delete_after=5)
         
@@ -198,17 +203,21 @@ class RideShare(discord.Client):
 
     # button get result method
     async def buttonGetResult(self):
+
         # verify if month is not empty
         if self.registerData['Month'] != "":
+
             # get month name and number by select
             self.month = self.registerData['Month'].split()[1][1:-1]
+
         else:
+
             # set month number actual month
             self.month = datetime.date.today().month
 
         # call class for calculate total per driver
         calulateTotalPerDriver = CalulateTotalPerDriver(self.cursor, self.channel, self, self.month)
-        
+
         await calulateTotalPerDriver.sendSelectTotalPerDriverFormatTable()
 
     # button delete register by date method
@@ -237,6 +246,9 @@ class RideShare(discord.Client):
         except:
             # send error message to channel
             await self.getChannel.send('Erro ao deletar registro' , delete_after=5)
+
+        await self.Selects.editViewGoingDrive()
+        await self.Selects.editViewReturnDrive()
 
 # main function
 if __name__ == '__main__':

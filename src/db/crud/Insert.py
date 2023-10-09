@@ -1,7 +1,9 @@
 # class for insert data into database
 class Insert:
+
     # constructor
     def __init__(self, table, columns, values, cursor):
+
         # create variables for class
         self.table = table
         self.columns = columns

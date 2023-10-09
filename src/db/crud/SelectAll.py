@@ -1,7 +1,9 @@
 # class SelectAll for select all data from table
 class SelectAll:
+
     # constructor
     def __init__(self, table, cursor):
+
         # create variables for class
         self.table = table
         self.cursor = cursor

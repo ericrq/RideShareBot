@@ -1,7 +1,9 @@
 # class for creating table in database
 class CreateTable:
+
     # constructor
     def __init__(self, table, columns, cursor):
+
         # create variables for class
         self.table = table
         self.columns = columns
