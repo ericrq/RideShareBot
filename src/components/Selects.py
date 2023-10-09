@@ -45,6 +45,8 @@ class Selects:
 
         self.selectedYear = datetime.date.today().year
 
+        self.selectedMonthNumber = datetime.date.today().month
+
         # create views of select year
         self.viewYear = self.createViewYearSelect()
 
@@ -64,19 +66,18 @@ class Selects:
         self.viewReturnDrive = self.createViewReturnDriveSelect()
 
     # create dates
-    def createDates(self):
+    def createDates(self, month=datetime.date.today().month, year=datetime.date.today().year):
 
-        # get today date
-        self.today = datetime.date.today()
-        
+        # get today date basead in month and year
+        self.today  = datetime.date(year, month, 1)
+
         # get first day of month
         self.firstDayOfMonth = self.today.replace(day=1)
 
         # get last day of month
-        self.lastDayOfMonth = (self.firstDayOfMonth.replace(month=self.firstDayOfMonth.month % 12 + 1, year=self.firstDayOfMonth.year + (1 if self.firstDayOfMonth.month == 12 else 0)) - datetime.timedelta(days=1))
+        self.lastDayOfMonth = self.today.replace(day=calendar.monthrange(self.today.year, self.today.month)[1])
 
-        # create list of dates of month
-        self.dates = [dia.strftime("%d/%m/%Y") for dia in (self.firstDayOfMonth + datetime.timedelta(days=d) for d in range((self.lastDayOfMonth - self.firstDayOfMonth).days + 1)) if dia.weekday() < 5]
+        self.dates = [day.strftime("%d/%m/%Y") for day in (self.firstDayOfMonth + datetime.timedelta(days=day) for day in range((self.lastDayOfMonth - self.firstDayOfMonth).days + 1)) if day.weekday() < 5]
 
     # create views of select month
     def createViewMonthSelect(self):
@@ -103,46 +104,19 @@ class Selects:
     async def onMonthSelect(self, interaction):
 
             # get selected month in select component
-            selectedMonth = interaction.data['values'][0]
-            
-            # transform month name in number
-            selectedMonthNumber = self.months.index(selectedMonth) + 1
+            self.selectedMonthData = interaction.data['values'][0]
 
-            # get first day of month
-            self.firstDayOfMonth = self.today.replace(day=1,month=selectedMonthNumber)
+            # format selected month removing parentheses and getting number
+            self.selectedMonthNumber = self.selectedMonthData.split(' ')[1][1:-1]
 
-            # get last day of month
-            self.lastDayOfMonth = (self.firstDayOfMonth.replace(month=self.firstDayOfMonth.month % 12 + 1, year=(int(self.selectedYear) + 1 if self.firstDayOfMonth.month == 12 else int(self.selectedYear))) - datetime.timedelta(days=1))
+            # call method createDates passing selected month number and selected year
+            self.createDates(month=int(self.selectedMonthNumber), year=int(self.selectedYear))
 
-            # get all dates of month
-            self.dates = [dia.strftime("%d/%m/%Y") for dia in (self.firstDayOfMonth + datetime.timedelta(days=d) for d in range((self.lastDayOfMonth - self.firstDayOfMonth).days + 1)) if dia.weekday() < 5]
-
-            # edit view of date select
+            # clean edit view of date select
             self.viewDate.clear_items()
 
             # call method editViewDate for edit view of date select
             await self.editViewDate()
-
-    # callback of select year
-    async def onYearSelect(self, interaction):
-
-        # get selected year in select component
-        self.selectedYear = interaction.data['values'][0]
-
-        # get first day of month and year
-        self.firstDayOfMonth = self.today.replace(day=1, year=int(self.selectedYear))
-
-        # get last day of month and year
-        self.lastDayOfMonth = (self.firstDayOfMonth.replace(month=self.firstDayOfMonth.month % 12 + 1, year=(int(self.selectedYear) + 1 if self.firstDayOfMonth.month == 12 else int(self.selectedYear))) - datetime.timedelta(days=1))
-
-        # get all dates based in selected year and month
-        self.dates = [dia.strftime("%d/%m/%Y") for dia in (self.firstDayOfMonth + datetime.timedelta(days=d) for d in range((self.lastDayOfMonth - self.firstDayOfMonth).days + 1)) if dia.weekday() < 5]
-
-        # clean edit view of date select
-        self.viewDate.clear_items()
-
-        # call editViewMonth for edit view of month select
-        await self.editViewDate()
 
     # create views of select year
     def createViewYearSelect(self):
@@ -165,7 +139,22 @@ class Selects:
 
         # return view
         return self.viewYear
-    
+
+    # callback of select year
+    async def onYearSelect(self, interaction):
+
+        # get selected year in select component
+        self.selectedYear = interaction.data['values'][0]
+
+        # call method createDates passing selected month number and selected year
+        self.createDates(year=int(self.selectedYear), month=int(self.selectedMonthNumber))
+
+        # clean edit view of date select
+        self.viewDate.clear_items()
+
+        # call editViewMonth for edit view of month select
+        await self.editViewDate()
+
 
     # create views of select
     def createViewDateSelect(self):
