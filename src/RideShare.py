@@ -166,6 +166,7 @@ class RideShare(discord.Client):
 
         # try insert data in table RideShare calling class Insert passing table, columns, values, cursor
         try:
+            # call class Insert passing table, columns, values, cursor
             Insert(
                 table='RideShare',
                 columns='RideShareDate, goingDrive, returnDrive',
@@ -173,20 +174,33 @@ class RideShare(discord.Client):
                 cursor=self.cursor
             )
 
+            # create embed for success message
+            successEmbed = discord.Embed(
+                title='Registro realizado com sucesso',
+                color=0x00ff00
+            )
+
             # send success message to channel
-            await self.getChannel.send('Registro realizado com sucesso', delete_after=5)
+            await self.getChannel.send(embed=successEmbed, delete_after=5)
 
         # except error
         except:
 
+            # create embed for error message
+            errorEmbed = discord.Embed(
+                title='Erro ao realizar registro',
+                color=0xff0000
+            )
+
             # send error message to channel
-            await self.getChannel.send('Erro ao realizar registro' , delete_after=5)
+            await self.getChannel.send(embed=errorEmbed, delete_after=5)
 
     # update data method
     async def updateData(self):
 
         # try update data in table RideShare calling class Insert passing table, columns, values, cursor
         try:
+            # call class Update passing table, columns, values, cursor, whereColumn, whereValue
             Update(
                 table='RideShare',
                 columns='RideShareDate, goingDrive, returnDrive',
@@ -196,13 +210,26 @@ class RideShare(discord.Client):
                 whereValue=f"'{self.registerData['RideShareDate']}'"
             )
 
+            # create embed for success message
+            successEmbed = discord.Embed(
+                title='Registro atualizado com sucesso',
+                color=0x00ff00
+            )
+
             # send success message to channel
-            await self.getChannel.send('Registro atualizado com sucesso', delete_after=5)
+            await self.getChannel.send(embed=successEmbed, delete_after=5)
         
         # except error
         except:
+
+            # creatte embed for error message
+            errorEmbed = discord.Embed(
+                title='Erro ao atualizar registro',
+                color=0xff0000
+            )
+
             # send error message to channel
-            await self.getChannel.send('Erro ao atualizar registro', delete_after=5)
+            await self.getChannel.send(embed=errorEmbed, delete_after=5)
 
     # button get result method
     async def buttonGetResult(self):
@@ -243,13 +270,26 @@ class RideShare(discord.Client):
                 whereValue=f"'{DateByDelete}'"
             )
 
+            # create embed for success message
+            successEmbed = discord.Embed(
+                title='Registro deletado com sucesso',
+                color=0x00ff00
+            )
+
             # send success message to channel
-            await self.getChannel.send('Registro deletado com sucesso', delete_after=5)
+            await self.getChannel.send(embed=successEmbed, delete_after=5)
 
         # except error
         except:
+
+            # create embed for error message
+            errorEmbed = discord.Embed(
+                title='Erro ao deletar registro',
+                color=0xff0000
+            )
+
             # send error message to channel
-            await self.getChannel.send('Erro ao deletar registro' , delete_after=5)
+            await self.getChannel.send(embed=errorEmbed, delete_after=5)
 
         await self.Selects.editViewGoingDrive()
         await self.Selects.editViewReturnDrive()
@@ -283,6 +323,6 @@ if __name__ == '__main__':
 
     # create object for class RideShare passing intents, channel, registerData, pathBD, ApiKey
     client = RideShare(intents, channel, registerData, 'src/db/RideShare.sqlite', DiscordApiKey)
-    
+
     # run bot
     client.run(DiscordApiKey)

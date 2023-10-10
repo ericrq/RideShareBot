@@ -7,6 +7,9 @@ from table2ascii import table2ascii as t2a, PresetStyle, Alignment
 # import calendar for get name of month
 import calendar
 
+# import discord for usage of embed
+import discord
+
 # class CalulateTotalPerDriver for calculate total per driver
 class CalulateTotalPerDriver:
 
@@ -34,8 +37,17 @@ class CalulateTotalPerDriver:
         # verify if getSelectTotalPerDriver is empty
         if self.getSelectTotalPerDriver == []:
 
-            # send message to channel and delete after 5 seconds
-            await self.channel.send(f'Não há Dados Registrados Para O Mês De {calendar.month_name[int(self.month)].capitalize()} De {self.year}', delete_after=5)
+            # # send message to channel and delete after 5 seconds
+            # await self.channel.send(f'Não há Dados Registrados Para O Mês De {calendar.month_name[int(self.month)].capitalize()} De {self.year}', delete_after=5)
+
+            embed = discord.Embed(
+                title='Não há Dados Registrados',
+                description=f'Para O Mês De {calendar.month_name[int(self.month)].capitalize()} De {self.year}',
+                color=0x00ff00
+            )
+
+            await self.channel.send(embed=embed, delete_after=5)
+
             return
 
         # create table format by table2ascii
