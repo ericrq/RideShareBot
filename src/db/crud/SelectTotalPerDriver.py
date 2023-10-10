@@ -11,11 +11,12 @@ import os
 class SelectTotalPerDriver:
 
     # constructor
-    def __init__(self, cursor, month):
+    def __init__(self, cursor, month, year):
 
         # create variables for class
         self.cursor = cursor
         self.month = month
+        self.year = year
         self.valuePerDriver = os.getenv("ValuePerDriver")
 
         '''
@@ -25,22 +26,25 @@ class SelectTotalPerDriver:
 
         # create variable for select all per driver and calculate total pay per driver
         self.selectTotalPerDriverQuery = f"""
-           SELECT driverName, SUM(count) as totalTimesDirected, SUM(count) * {self.valuePerDriver} as totalPay
+            SELECT driverName, SUM(count) as totalTimesDirected, SUM(count) * {self.valuePerDriver} as totalPay
             FROM (
                 SELECT goingDrive as driverName, COUNT(*) as count
                 FROM RideShare
-                WHERE substr(RideShareDate, 4, 2) = '{self.month}'
+                WHERE substr(RideShareDate, -4) = '{self.year}' 
+                    AND substr(RideShareDate, 4, 2) = '{self.month}'
                 GROUP BY goingDrive
                 UNION ALL
                 SELECT returnDrive as driverName, COUNT(*) as count
                 FROM RideShare
-                WHERE substr(RideShareDate, 4, 2) = '{self.month}'
+                WHERE substr(RideShareDate, -4) = '{self.year}' 
+                    AND substr(RideShareDate, 4, 2) = '{self.month}'
                 GROUP BY returnDrive    
             ) as subquery
             GROUP BY driverName
             ORDER BY totalPay desc
         """
-        
+
+
         # execute select query
         self.cursor.execute(self.selectTotalPerDriverQuery)
 

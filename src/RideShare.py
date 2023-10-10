@@ -138,6 +138,9 @@ class RideShare(discord.Client):
             elif interaction.data['custom_id'] == 'MonthSelect':
                 self.registerData['Month'] = interaction.data['values'][0]
 
+            elif interaction.data['custom_id'] == 'YearSelect':
+                self.registerData['Year'] = interaction.data['values'][0]
+
     # format data method
     async def formatData(self):
 
@@ -205,18 +208,19 @@ class RideShare(discord.Client):
     async def buttonGetResult(self):
 
         # verify if month is not empty
-        if self.registerData['Month'] != "":
+        if self.registerData['Month'] != "" and self.registerData['Year'] != "":
 
             # get month name and number by select
             self.month = self.registerData['Month'].split()[1][1:-1]
-
+            self.year = self.registerData['Year']
         else:
 
             # set month number actual month
             self.month = datetime.date.today().month
+            self.year = datetime.date.today().year
 
         # call class for calculate total per driver
-        calulateTotalPerDriver = CalulateTotalPerDriver(self.cursor, self.channel, self, self.month)
+        calulateTotalPerDriver = CalulateTotalPerDriver(self.cursor, self.channel, self, self.month, self.year)
 
         await calulateTotalPerDriver.sendSelectTotalPerDriverFormatTable()
 
@@ -270,7 +274,8 @@ if __name__ == '__main__':
         "RideShareDate" : "",
         "goingDrive" : "",
         "returnDrive" : "",
-        "Month" : ""
+        "Month" : "",
+        "Year" : ""
     }
 
     # get discord api key
