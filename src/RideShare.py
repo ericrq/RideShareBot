@@ -7,9 +7,6 @@ from dotenv import load_dotenv
 # import os library
 import os
 
-# import calendar library
-import datetime
-
 # import locale library
 import locale
 
@@ -22,23 +19,14 @@ from components.Buttons import Buttons
 # import crud connections
 from db.crud.Connection import Connection
 
-# import crud insert
-from db.crud.Insert import Insert
-
-# import crud update
-from db.crud.Update import Update
-
 # import crud create table
 from db.crud.CreateTable import CreateTable
-
-# import crud select where
-from db.crud.SelectWhere import SelectWhere
 
 # import crud delete by where
 from db.crud.DeleteByWhere import DeleteByWhere
 
-# import logic operations
-from logic.CalculateTotalPerDriver import CalulateTotalPerDriver
+# import app commands from discord library used for slash commands
+from discord import app_commands
 
 # load environment variables
 load_dotenv()
@@ -47,16 +35,27 @@ load_dotenv()
 class RideShare(discord.Client):
 
     # constructor
-    def __init__(self, intents, channel, registerData, pathBD, ApiKey):
+    def __init__(self, intents, channel, pathBD, ApiKey):
 
         # call constructor of class discord.Client
         super().__init__(intents=intents)
+        
+        # set synced to false
+        self.synced = False
 
-        # create variables for class
+        # set channel id
         self.channel = channel
-        self.registerData = registerData
+
+        # get channel by id
+        self.getChannel = self.get_channel(self.channel)
+
+        # set pathBD
         self.pathBD = pathBD
+
+        # set ApiKey
         self.ApiKey = ApiKey
+
+        # set cursor getting connection passing pathBD
         self.cursor = Connection(self.pathBD).getCursor()
 
         # define locale for language month get by calendar.month_name
@@ -65,14 +64,13 @@ class RideShare(discord.Client):
         # create table RideShare calling class CreateTable passing table, columns, cursor
         CreateTable('RideShare', 'RideShareDate TEXT, goingDrive TEXT, returnDrive TEXT', self.cursor)
 
-    # method for run bot
-    async def on_ready(self):
+    async def startRideShare(self):
 
         # create object for select ui componets
-        self.Selects =  Selects(self.channel, self)
+        self.Selects =  Selects(self.channel, self, self.cursor)
 
         # create object for button ui components
-        self.Buttons = Buttons(self.channel, self)
+        self.Buttons = Buttons(self.channel, self, self.cursor, self.Selects)
 
         # send view for select ui componets
         await self.Selects.sendViewYear()
@@ -84,215 +82,20 @@ class RideShare(discord.Client):
         # call class for get result
         await self.Buttons.sendButtons()
 
-    # method for get interaction
-    async def on_interaction(self, interaction):
+    # method for run bot
+    async def on_ready(self):
 
-        # call method onChargeSelects
-        await self.onChargeSelects(interaction)
+        # await until bot is ready
+        await self.wait_until_ready()
 
-        # call method onButtonClick
-        await self.onButtonClick(interaction)
+        # check if synced is false
+        if not self.synced:
 
-        # set getChannel for get channel method
-        self.getChannel = self.get_channel(self.channel)
+            # sync slash commands
+            await tree.sync(guild = discord.Object(id=967922108501999616))
 
-        # call method formatData
-        await self.formatData()
-
-    # on button click method
-    async def onButtonClick(self, interaction):
-
-        # if interaction is instance of discord.Interaction
-        if isinstance(interaction, discord.Interaction):
-
-            # if interaction.data['custom_id'] is equal to buttonGetResult
-            if interaction.data['custom_id'] == 'buttonGetResult':
-
-                # call method buttonGetResult
-                await self.buttonGetResult()
-
-            # if interaction.data['custom_id'] is equal to buttonDeleteRegisterByDate
-            elif interaction.data['custom_id'] == 'buttonDeleteRegisterByDate':
-
-                # call method buttonDeleteRegisterByDate
-                await self.buttonDeleteRegisterByDate()
-
-    # on charge selects method
-    async def onChargeSelects(self, interaction):
-
-        # if interaction is instance of discord.Interaction, defer interaction, remove error message
-        await interaction.response.defer()
-
-        # if interaction is instance of discord.Interaction, get data
-        if isinstance(interaction, discord.Interaction):
-
-            # if interaction.data['custom_id'] is equal to datesSelect, goingDriveSelect, returnDriveSelect, get values
-            if interaction.data['custom_id'] == 'datesSelect':
-                self.registerData['RideShareDate'] = interaction.data['values'][0]
-            elif interaction.data['custom_id'] == 'goingDriveSelect':
-                self.registerData['goingDrive'] = interaction.data['values'][0]
-
-            elif interaction.data['custom_id'] == 'returnDriveSelect':
-                self.registerData['returnDrive'] = interaction.data['values'][0]
-
-            elif interaction.data['custom_id'] == 'MonthSelect':
-                self.registerData['Month'] = interaction.data['values'][0]
-
-            elif interaction.data['custom_id'] == 'YearSelect':
-                self.registerData['Year'] = interaction.data['values'][0]
-
-    # format data method
-    async def formatData(self):
-
-        # if registerData is not empty, call method insertData or updateData
-        if self.registerData['RideShareDate'] != "" and self.registerData['goingDrive'] != "" and self.registerData['returnDrive'] != "":
-
-            # select data in table RideShare calling class SelectWhere passing table, columns, cursor, whereColumn, whereValue
-            selectData = SelectWhere(
-                table='RideShare',
-                cursor=self.cursor,
-                whereColumn='RideShareDate',
-                whereValue=f"'{self.registerData['RideShareDate']}'"
-            ).getSelectWhere()
-
-            # if selectData is equal to [] means that data not exists in table RideShare then insert data else update data
-            if selectData == []:
-                await self.insertData()
-            else:
-                await self.updateData()
-
-    # insert data method
-    async def insertData(self):
-
-        # try insert data in table RideShare calling class Insert passing table, columns, values, cursor
-        try:
-            # call class Insert passing table, columns, values, cursor
-            Insert(
-                table='RideShare',
-                columns='RideShareDate, goingDrive, returnDrive',
-                values=f"'{self.registerData['RideShareDate']}', '{self.registerData['goingDrive']}', '{self.registerData['returnDrive']}'",
-                cursor=self.cursor
-            )
-
-            # create embed for success message
-            successEmbed = discord.Embed(
-                title='Registro realizado com sucesso',
-                color=0x00ff00
-            )
-
-            # send success message to channel
-            await self.getChannel.send(embed=successEmbed, delete_after=5)
-
-        # except error
-        except:
-
-            # create embed for error message
-            errorEmbed = discord.Embed(
-                title='Erro ao realizar registro',
-                color=0xff0000
-            )
-
-            # send error message to channel
-            await self.getChannel.send(embed=errorEmbed, delete_after=5)
-
-    # update data method
-    async def updateData(self):
-
-        # try update data in table RideShare calling class Insert passing table, columns, values, cursor
-        try:
-            # call class Update passing table, columns, values, cursor, whereColumn, whereValue
-            Update(
-                table='RideShare',
-                columns='RideShareDate, goingDrive, returnDrive',
-                values=f"'{self.registerData['RideShareDate']}', '{self.registerData['goingDrive']}', '{self.registerData['returnDrive']}'",
-                cursor=self.cursor,
-                whereColumn='RideShareDate',
-                whereValue=f"'{self.registerData['RideShareDate']}'"
-            )
-
-            # create embed for success message
-            successEmbed = discord.Embed(
-                title='Registro atualizado com sucesso',
-                color=0x00ff00
-            )
-
-            # send success message to channel
-            await self.getChannel.send(embed=successEmbed, delete_after=5)
-        
-        # except error
-        except:
-
-            # creatte embed for error message
-            errorEmbed = discord.Embed(
-                title='Erro ao atualizar registro',
-                color=0xff0000
-            )
-
-            # send error message to channel
-            await self.getChannel.send(embed=errorEmbed, delete_after=5)
-
-    # button get result method
-    async def buttonGetResult(self):
-
-        # verify if month is not empty
-        if self.registerData['Month'] != "" and self.registerData['Year'] != "":
-
-            # get month name and number by select
-            self.month = self.registerData['Month'].split()[1][1:-1]
-            self.year = self.registerData['Year']
-        else:
-
-            # set month number actual month
-            self.month = datetime.date.today().month
-            self.year = datetime.date.today().year
-
-        # call class for calculate total per driver
-        calulateTotalPerDriver = CalulateTotalPerDriver(self.cursor, self.channel, self, self.month, self.year)
-
-        await calulateTotalPerDriver.sendSelectTotalPerDriverFormatTable()
-
-    # button delete register by date method
-    async def buttonDeleteRegisterByDate(self):
-
-        # clear registerData for delete register
-        self.registerData['goingDrive'] = ""
-        self.registerData['returnDrive'] = ""
-        
-        # get date by delete
-        DateByDelete = self.registerData['RideShareDate']
-
-        # try delete data in table RideShare calling class DeleteByWhere passing table, cursor, whereColumn, whereValue
-        try:
-            DeleteByWhere(
-                table='RideShare',
-                cursor=self.cursor,
-                whereColumn='RideShareDate',
-                whereValue=f"'{DateByDelete}'"
-            )
-
-            # create embed for success message
-            successEmbed = discord.Embed(
-                title='Registro deletado com sucesso',
-                color=0x00ff00
-            )
-
-            # send success message to channel
-            await self.getChannel.send(embed=successEmbed, delete_after=5)
-
-        # except error
-        except:
-
-            # create embed for error message
-            errorEmbed = discord.Embed(
-                title='Erro ao deletar registro',
-                color=0xff0000
-            )
-
-            # send error message to channel
-            await self.getChannel.send(embed=errorEmbed, delete_after=5)
-
-        await self.Selects.editViewGoingDrive()
-        await self.Selects.editViewReturnDrive()
+            # set synced to true
+            self.synced = True
 
 # main function
 if __name__ == '__main__':
@@ -309,20 +112,26 @@ if __name__ == '__main__':
     # convert channel id to int
     channel = (int(DiscordChannelId))
 
-    # create variable for register data
-    registerData = {
-        "RideShareDate" : "",
-        "goingDrive" : "",
-        "returnDrive" : "",
-        "Month" : "",
-        "Year" : ""
-    }
-
     # get discord api key
     DiscordApiKey = os.getenv('DiscordApiKey')
 
     # create object for class RideShare passing intents, channel, registerData, pathBD, ApiKey
-    client = RideShare(intents, channel, registerData, 'src/db/RideShare.sqlite', DiscordApiKey)
+    client = RideShare(intents, channel, 'src/db/RideShare.sqlite', DiscordApiKey)
+
+    # create tree object for slash commands
+    tree = app_commands.CommandTree(client)
+
+    # create slash command for start RideShare, passing guild and name and description
+    @tree.command(guild = discord.Object(id=967922108501999616), name = 'start', description='Start RideShare')
+
+    # create async function for start RideShare
+    async def rideShare(interaction: discord.Interaction):
+
+        # send feedback for user that RideShare was started
+        await interaction.response.send_message(f"RideShare Foi Iniciado!", ephemeral=True)
+
+        # call method startRideShare
+        await client.startRideShare()
 
     # run bot
     client.run(DiscordApiKey)

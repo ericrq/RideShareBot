@@ -16,6 +16,15 @@ from dotenv import load_dotenv
 # import os library
 import os
 
+# import crud insert
+from db.crud.Insert import Insert
+
+# import crud update
+from db.crud.Update import Update
+
+# import crud select where
+from db.crud.SelectWhere import SelectWhere
+
 # load environment variables
 load_dotenv()
 
@@ -23,11 +32,15 @@ load_dotenv()
 class Selects:
 
     # constructor
-    def __init__(self, channel, client):
+    def __init__(self, channel, client, cursor):
         '''
         channel: channel id
         client: discord client
+        cursor: cursor for database
         '''
+
+        # set cursor
+        self.cursor = cursor    
 
         # get channel by channel id
         self.channel = client.get_channel(channel)
@@ -38,17 +51,26 @@ class Selects:
         # define locale for language month get by calendar.month_name
         locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
-        # create list of all months name and number
-        self.months = [f"{calendar.month_name[month]} ({str(month).zfill(2)})" for month in range(1, 13)]
-
         # create list of last 2 years and current year
         self.years = [str(year) for year in range(datetime.date.today().year - 2, datetime.date.today().year + 1)]
+
+        # create list of all months name and number
+        self.months = [f"{calendar.month_name[month]} ({str(month).zfill(2)})" for month in range(1, 13)]
 
         # get current year and selected year
         self.selectedYear = datetime.date.today().year
 
         # get current month and selected month
         self.selectedMonthNumber = datetime.date.today().month
+
+        # get current date and selected date
+        self.selectedDate = datetime.date.today().strftime("%d/%m/%Y")
+
+        # get selected going drive
+        self.selectedGoingDrive = ""
+
+        # get selected return drive
+        self.selectedReturnDrive = ""
 
         # create views of select year
         self.viewYear = self.createViewYearSelect()
@@ -68,6 +90,15 @@ class Selects:
         # create views of return drive select
         self.viewReturnDrive = self.createViewReturnDriveSelect()
 
+        # get register data
+        self.registerData = {
+            "year": self.selectedYear,
+            "month": self.selectedMonthNumber,
+            "rideShareDate": self.selectedDate,
+            "goingDriver": "",
+            "returnDriver": "",
+        }
+
     # create dates
     def createDates(self, month=datetime.date.today().month, year=datetime.date.today().year):
 
@@ -80,6 +111,7 @@ class Selects:
         # get last day of month
         self.lastDayOfMonth = self.today.replace(day=calendar.monthrange(self.today.year, self.today.month)[1])
 
+        # create list of dates
         self.dates = [day.strftime("%d/%m/%Y") for day in (self.firstDayOfMonth + datetime.timedelta(days=day) for day in range((self.lastDayOfMonth - self.firstDayOfMonth).days + 1)) if day.weekday() < 5]
 
     # create views of select month
@@ -107,20 +139,26 @@ class Selects:
     # callback of select month
     async def onMonthSelect(self, interaction):
 
-            # get selected month in select component
-            self.selectedMonthData = interaction.data['values'][0]
+        # get selected month in select component
+        self.selectedMonthData = interaction.data['values'][0]
 
-            # format selected month removing parentheses and getting number
-            self.selectedMonthNumber = self.selectedMonthData.split(' ')[1][1:-1]
+        # format selected month removing parentheses and getting number
+        self.registerData['month'] = self.selectedMonthNumber = self.selectedMonthData.split(' ')[1][1:-1]
 
-            # call method createDates passing selected month number and selected year
-            self.createDates(month=int(self.selectedMonthNumber), year=int(self.selectedYear))
+        # call method formatRegisterData for format register data for insert or update
+        await self.formatRegisterData()
 
-            # clean edit view of date select
-            self.viewDate.clear_items()
+        # interaction response defer
+        await interaction.response.defer()
 
-            # call method editViewDate for edit view of date select
-            await self.editViewDate()
+        # call method createDates passing selected month number and selected year
+        self.createDates(month=int(self.selectedMonthNumber), year=int(self.selectedYear))
+
+        # clean edit view of date select
+        self.viewDate.clear_items()
+
+        # call method editViewDate for edit view of date select
+        await self.editViewDate()
 
     # create views of select year
     def createViewYearSelect(self):
@@ -148,7 +186,13 @@ class Selects:
     async def onYearSelect(self, interaction):
 
         # get selected year in select component
-        self.selectedYear = interaction.data['values'][0]
+        self.registerData['year'] = self.selectedYear = interaction.data['values'][0]
+
+        # call method formatRegisterData for format register data for insert or update
+        await self.formatRegisterData()
+
+        # interaction response defer
+        await interaction.response.defer()
 
         # call method createDates passing selected month number and selected year
         self.createDates(year=int(self.selectedYear), month=int(self.selectedMonthNumber))
@@ -175,8 +219,24 @@ class Selects:
         # add select to view
         self.viewDate.add_item(self.datesSelect)
 
+        # callback of select date
+        self.datesSelect.callback = self.onDateSelect
+
         # return view
         return self.viewDate
+
+    # callback of select date
+    async def onDateSelect(self, interaction):
+
+        self.selectedDate = interaction.data['values'][0]
+
+        self.registerData['rideShareDate'] = interaction.data['values'][0]
+
+        # call method formatRegisterData for format register data for insert or update
+        await self.formatRegisterData()
+
+        # interaction response defer
+        await interaction.response.defer()
 
     # create view of going drive select
     def createViewGoingDriveSelect(self):
@@ -194,9 +254,25 @@ class Selects:
         # add select to view
         self.viewGoingDrive.add_item(self.goingDriveSelect)
 
+        # callback of going drive select
+        self.goingDriveSelect.callback = self.onGoingDriveSelect
+
         # return view
         return self.viewGoingDrive
-    
+
+    # callback of going drive select
+    async def onGoingDriveSelect(self, interaction):
+
+        self.selectedGoingDrive = interaction.data['values'][0]
+
+        self.registerData['goingDriver'] = interaction.data['values'][0]
+
+        # call method formatRegisterData for format register data for insert or update
+        await self.formatRegisterData()
+
+        # response interaction defer
+        await interaction.response.defer()
+
     # create view of return drive select
     def createViewReturnDriveSelect(self):
 
@@ -213,9 +289,61 @@ class Selects:
         # add select to view
         self.viewReturnDrive.add_item(self.returnDriveSelect)
 
+        # callback of return drive select
+        self.returnDriveSelect.callback = self.onReturnDriveSelect
+
         # return view
         return self.viewReturnDrive
-    
+
+    # callback of return drive select
+    async def onReturnDriveSelect(self, interaction):
+
+        # get selected return drive in select component
+        self.registerData['returnDriver'] = self.selectedReturnDrive = interaction.data['values'][0]
+
+        # call method formatRegisterData for format register data for insert or update
+        await self.formatRegisterData()
+
+        # response interaction defer
+        await interaction.response.defer()
+
+    #  edit view of date select
+    async def editViewDate(self):
+
+        # call method getMessagesLimit for get messages of channel
+        messages = await self.getMessagesLimit()
+
+        # loop in messages of channel
+        for message in messages:
+
+            # verify if message content is equal to "Selecione A Data Que Deseja Registrar"
+            if message.content == "Selecione A Data Que Deseja Registrar":
+
+                # set message id in variable
+                messageDateId = message.id
+
+        # fetch message by id
+        messageDateSelect = await self.channel.fetch_message(messageDateId)
+
+        # create select of dates
+        self.datesSelect = discord.ui.Select(
+            custom_id="datesSelect",
+            placeholder="Selecione A Data",
+            options=[discord.SelectOption(label=date) for date in self.dates]
+        )
+
+        # create view
+        self.viewDate = discord.ui.View()
+
+        # add select to view
+        self.viewDate.add_item(self.datesSelect)
+
+        # callback of select date
+        self.datesSelect.callback = self.onDateSelect
+
+        # edit view of date select
+        await messageDateSelect.edit(view=self.viewDate)
+
     # edit view of going drive select use in buttonDeleteRegisterByDate
     async def editViewGoingDrive(self):
 
@@ -246,6 +374,9 @@ class Selects:
 
         # add select to view
         self.viewGoingDrive.add_item(self.goingDriveSelect)
+
+        # callback of going drive select
+        self.goingDriveSelect.callback = self.onGoingDriveSelect
 
         # edit view of going drive select
         await messageGoingDrive.edit(view=self.viewGoingDrive)
@@ -281,43 +412,12 @@ class Selects:
         # add select to view
         self.viewReturnDrive.add_item(self.returnDriveSelect)
 
+        # callback of return drive select
+        self.returnDriveSelect.callback = self.onReturnDriveSelect
+
         # edit view of return drive select
         await messageReturnDrive.edit(view=self.viewReturnDrive)
 
-    #  edit view of date select
-    async def editViewDate(self):
-
-        # call method getMessagesLimit for get messages of channel
-        messages = await self.getMessagesLimit()
-
-        # loop in messages of channel
-        for message in messages:
-
-            # verify if message content is equal to "Selecione A Data Que Deseja Registrar"
-            if message.content == "Selecione A Data Que Deseja Registrar":
-
-                # set message id in variable
-                messageDateId = message.id
-
-        # fetch message by id
-        messageDateSelect = await self.channel.fetch_message(messageDateId)
-
-        # create select of dates
-        self.datesSelect = discord.ui.Select(
-            custom_id="datesSelect",
-            placeholder="Selecione A Data",
-            options=[discord.SelectOption(label=date) for date in self.dates]
-        )
-
-        # create view
-        self.viewDate = discord.ui.View()
-
-        # add select to view
-        self.viewDate.add_item(self.datesSelect)
-
-        # edit view of date select
-        await messageDateSelect.edit(view=self.viewDate)
-    
     # get history messages of channel
     async def getMessagesLimit(self):
 
@@ -386,3 +486,103 @@ class Selects:
 
         # send views return drive and text to channel
         await self.channel.send(f"Selecione O Motorista De Volta", view=self.viewReturnDrive)
+
+    async def formatRegisterData(self):
+        # if registerData is not empty, call method insertData or updateData
+        if self.registerData['rideShareDate'] != "" and self.registerData['goingDriver'] != "" and self.registerData['returnDriver'] != "":
+
+            # select data in table RideShare calling class SelectWhere passing table, columns, cursor, whereColumn, whereValue
+            selectData = SelectWhere(
+                table='RideShare',
+                cursor=self.cursor,
+                whereColumn='RideShareDate',
+                whereValue=f"'{self.registerData['rideShareDate']}'"
+            ).getSelectWhere()
+
+            # if selectData is equal to [] means that data not exists in table RideShare then insert data else update data
+            if selectData == []:
+                await self.insertData()
+            else:
+                await self.updateData()
+
+    # insert data method
+    async def insertData(self):
+
+        # try insert data in table RideShare calling class Insert passing table, columns, values, cursor
+        try:
+            # call class Insert passing table, columns, values, cursor
+            Insert(
+                table='RideShare',
+                columns='RideShareDate, goingDrive, returnDrive',
+                values=f"'{self.registerData['rideShareDate']}', '{self.registerData['goingDriver']}', '{self.registerData['returnDriver']}'",
+                cursor=self.cursor
+            )
+
+            # create embed for success message
+            successEmbed = discord.Embed(
+                title='Registro realizado com sucesso',
+                color=0x00ff00
+            )
+
+            # send success message to channel
+            await self.channel.send(embed=successEmbed, delete_after=5)
+
+        # except error
+        except:
+
+            # create embed for error message
+            errorEmbed = discord.Embed(
+                title='Erro ao realizar registro',
+                color=0xff0000
+            )
+
+            # send error message to channel
+            await self.channel.send(embed=errorEmbed, delete_after=5)
+
+    # update data method
+    async def updateData(self):
+
+        # try update data in table RideShare calling class Insert passing table, columns, values, cursor
+        try:
+            # call class Update passing table, columns, values, cursor, whereColumn, whereValue
+            Update(
+                table='RideShare',
+                columns='RideShareDate, goingDrive, returnDrive',
+                values=f"'{self.registerData['rideShareDate']}', '{self.registerData['goingDriver']}', '{self.registerData['returnDriver']}'",
+                cursor=self.cursor,
+                whereColumn='RideShareDate',
+                whereValue=f"'{self.registerData['rideShareDate']}'"
+            )
+
+            # create embed for success message
+            successEmbed = discord.Embed(
+                title='Registro atualizado com sucesso',
+                color=0x00ff00
+            )
+
+            # send success message to channel
+            await self.channel.send(embed=successEmbed, delete_after=5)
+        
+        # except error
+        except:
+
+            # creatte embed for error message
+            errorEmbed = discord.Embed(
+                title='Erro ao atualizar registro',
+                color=0xff0000
+            )
+
+            # send error message to channel
+            await self.channel.send(embed=errorEmbed, delete_after=5)
+
+    # get register data
+    def getRegisterData(self):
+
+        # return register data
+        return self.registerData
+    
+    # get channel
+    def getChannel(self):
+
+        # return channel
+        return self.channel

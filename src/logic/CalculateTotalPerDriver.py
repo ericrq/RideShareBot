@@ -16,16 +16,27 @@ class CalulateTotalPerDriver:
     # constructor
     def __init__(self, cursor, channel, client, month, year):
 
-        # create variables for class
+        # set cursor
         self.cursor = cursor
-        self.channel = client.get_channel(channel)
+
+        # set channel
+        self.channel = channel
+
+        # set month
         self.month = month
+
+        # set year
         self.year = year
+
+        # set client
+        self.client = client
 
         '''
         cursor: cursor of database
         channel: channel of discord
+        client: client of discord
         month: month of ride share
+        year: year of ride share
         '''
 
         # call class SelectTotalPerDriver and getSelectTotalPerDriver for return data
