@@ -39,7 +39,7 @@ class RideShare(discord.Client):
 
         # call constructor of class discord.Client
         super().__init__(intents=intents)
-        
+
         # set synced to false
         self.synced = False
 

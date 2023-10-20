@@ -36,6 +36,8 @@ class Buttons:
         # get channel by channel id
         self.getChannel = self.selectInstance.getChannel()
 
+        self.registerData = self.selectInstance.getRegisterData()
+
     # method for create button get result
     def createButtonGetResult(self):
 
@@ -57,18 +59,14 @@ class Buttons:
     async def onClickButtonGetResult(self, interaction):
 
         # call method buttonGetResult for get result in database
-        await self.buttonGetResultSelect()
-
-        # defer interaction response
-        await interaction.response.defer()
+        await self.buttonGetResultSelect(interaction)
 
     # button get result method
-    async def buttonGetResultSelect(self):
+    async def buttonGetResultSelect(self, interaction):
         self.registerData = self.selectInstance.getRegisterData()
-        print(self.registerData)
 
         # call class for calculate total per driver
-        calulateTotalPerDriver = CalulateTotalPerDriver(self.cursor, self.getChannel, self, self.registerData['month'], self.registerData['year'])
+        calulateTotalPerDriver = CalulateTotalPerDriver(self.cursor, self.getChannel, self, self.registerData['month'], self.registerData['year'], interaction)
 
         # call method for send select total per driver format table
         await calulateTotalPerDriver.sendSelectTotalPerDriverFormatTable()
@@ -93,11 +91,11 @@ class Buttons:
     # callback for button delete register by date
     async def onClickButtonDeleteRegisterByDate(self, interaction):
 
-        # call method button delete register by date
-        await self.DeleteButtonRegisterByDate()
-
         # defer interaction response
         await interaction.response.defer()
+
+        # call method button delete register by date
+        await self.DeleteButtonRegisterByDate()
 
     # button delete register by date method
     async def DeleteButtonRegisterByDate(self):
@@ -108,6 +106,13 @@ class Buttons:
 
         if DateByDelete == "":
             return
+        
+        # call method for edit views usage for reseting views
+        await self.selectInstance.editViewReturnDrive()
+        await self.selectInstance.editViewGoingDrive()
+
+        # call method for set register data reseting register data
+        self.selectInstance.setRegisterData()
 
         # try delete data in table RideShare calling class DeleteByWhere passing table, cursor, whereColumn, whereValue
         try:

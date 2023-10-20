@@ -145,11 +145,19 @@ class Selects:
         # format selected month removing parentheses and getting number
         self.registerData['month'] = self.selectedMonthNumber = self.selectedMonthData.split(' ')[1][1:-1]
 
-        # call method formatRegisterData for format register data for insert or update
-        await self.formatRegisterData()
-
         # interaction response defer
         await interaction.response.defer()
+
+        # set selected going drive and return drive to empty on change date
+        self.registerData['goingDriver'] = ""
+        self.registerData['returnDriver'] = ""
+
+        # edit view of going drive select for reseting selected going drive
+        await self.editViewGoingDrive()
+        await self.editViewReturnDrive()
+
+        # call method formatRegisterData for format register data for insert or update
+        await self.formatRegisterData()
 
         # call method createDates passing selected month number and selected year
         self.createDates(month=int(self.selectedMonthNumber), year=int(self.selectedYear))
@@ -185,14 +193,25 @@ class Selects:
     # callback of select year
     async def onYearSelect(self, interaction):
 
-        # get selected year in select component
-        self.registerData['year'] = self.selectedYear = interaction.data['values'][0]
+        # set selected year
+        self.selectedYear = interaction.data['values'][0]
 
-        # call method formatRegisterData for format register data for insert or update
-        await self.formatRegisterData()
+        # get selected year in select component
+        self.registerData['year'] = interaction.data['values'][0]
 
         # interaction response defer
         await interaction.response.defer()
+
+        # set selected going drive and return drive to empty on change date
+        self.registerData['goingDriver'] = ""
+        self.registerData['returnDriver'] = ""
+
+        # edit view of going drive select for reseting selected going drive
+        await self.editViewGoingDrive()
+        await self.editViewReturnDrive()
+
+        # call method formatRegisterData for format register data for insert or update
+        await self.formatRegisterData()
 
         # call method createDates passing selected month number and selected year
         self.createDates(year=int(self.selectedYear), month=int(self.selectedMonthNumber))
@@ -228,15 +247,25 @@ class Selects:
     # callback of select date
     async def onDateSelect(self, interaction):
 
+        # get selected date in select component
         self.selectedDate = interaction.data['values'][0]
 
+        # set register data ride share date with selected date
         self.registerData['rideShareDate'] = interaction.data['values'][0]
-
-        # call method formatRegisterData for format register data for insert or update
-        await self.formatRegisterData()
 
         # interaction response defer
         await interaction.response.defer()
+
+        # set selected going drive and return drive to empty on change date
+        self.registerData['goingDriver'] = ""
+        self.registerData['returnDriver'] = ""
+
+        # edit view of going drive select for reseting selected going drive
+        await self.editViewGoingDrive()
+        await self.editViewReturnDrive()
+
+        # call method formatRegisterData for format register data for insert or update
+        await self.formatRegisterData()
 
     # create view of going drive select
     def createViewGoingDriveSelect(self):
@@ -580,6 +609,18 @@ class Selects:
 
         # return register data
         return self.registerData
+    
+    # set register data usage in buttonDeleteRegisterByDate for reseting register data
+    def setRegisterData(self):
+
+        # set register data
+        self.registerData = {
+            "year": self.selectedYear,
+            "month": self.selectedMonthNumber,
+            "rideShareDate": self.selectedDate,
+            "goingDriver": "",
+            "returnDriver": "",
+        }
     
     # get channel
     def getChannel(self):

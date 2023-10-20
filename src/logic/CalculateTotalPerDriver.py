@@ -14,7 +14,7 @@ import discord
 class CalulateTotalPerDriver:
 
     # constructor
-    def __init__(self, cursor, channel, client, month, year):
+    def __init__(self, cursor, channel, client, month, year, interaction):
 
         # set cursor
         self.cursor = cursor
@@ -30,6 +30,9 @@ class CalulateTotalPerDriver:
 
         # set client
         self.client = client
+
+        # set interaction
+        self.interaction = interaction
 
         '''
         cursor: cursor of database
@@ -73,5 +76,5 @@ class CalulateTotalPerDriver:
             cell_padding=1
         )
 
-        # send table format to channel
-        await self.channel.send(f'```\t\t\t\tTabela Relativa Ao Mes De {calendar.month_name[int(self.month)].capitalize()} De {self.year}\n{formatTable}```')
+        # send table format to chanel in ephemeral using interaction
+        await self.interaction.response.send_message(f'```\t\t\t\tTabela Relativa Ao Mes De {calendar.month_name[int(self.month)].capitalize()} De {self.year}\n{formatTable}```', ephemeral=True)
