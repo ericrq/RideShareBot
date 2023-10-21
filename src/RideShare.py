@@ -85,6 +85,9 @@ class RideShare(discord.Client):
     # method for run bot
     async def on_ready(self):
 
+        # define activity for bot
+        await client.change_presence(activity=discord.Game(name="/rideshare"))
+
         # await until bot is ready
         await self.wait_until_ready()
 
@@ -121,8 +124,10 @@ if __name__ == '__main__':
     # create tree object for slash commands
     tree = app_commands.CommandTree(client)
 
+    DiscordGuildId = os.getenv('DiscordGuildId')
+
     # create slash command for start RideShare, passing guild and name and description
-    @tree.command(guild = discord.Object(id=967922108501999616), name = 'start', description='Start RideShare')
+    @tree.command(guild = discord.Object(id=DiscordGuildId), name = 'rideshare', description='Start RideShare')
 
     # create async function for start RideShare
     async def rideShare(interaction: discord.Interaction):
