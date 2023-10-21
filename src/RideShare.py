@@ -35,7 +35,7 @@ load_dotenv()
 class RideShare(discord.Client):
 
     # constructor
-    def __init__(self, intents, channel, pathBD, ApiKey):
+    def __init__(self, intents, channel, pathBD, ApiKey, discordGuildId):
 
         # call constructor of class discord.Client
         super().__init__(intents=intents)
@@ -54,6 +54,8 @@ class RideShare(discord.Client):
 
         # set ApiKey
         self.ApiKey = ApiKey
+
+        self.discordGuildId = discordGuildId
 
         # set cursor getting connection passing pathBD
         self.cursor = Connection(self.pathBD).getCursor()
@@ -95,7 +97,7 @@ class RideShare(discord.Client):
         if not self.synced:
 
             # sync slash commands
-            await tree.sync(guild = discord.Object(id=967922108501999616))
+            await tree.sync(guild = discord.Object(id=self.discordGuildId))
 
             # set synced to true
             self.synced = True
@@ -115,16 +117,17 @@ if __name__ == '__main__':
     # convert channel id to int
     channel = (int(DiscordChannelId))
 
-    # get discord api key
+    # set discord api key using environment variable
     DiscordApiKey = os.getenv('DiscordApiKey')
 
+    # set discord guild id using environment variable
+    DiscordGuildId = os.getenv('DiscordGuildId')
+
     # create object for class RideShare passing intents, channel, registerData, pathBD, ApiKey
-    client = RideShare(intents, channel, 'src/db/RideShare.sqlite', DiscordApiKey)
+    client = RideShare(intents, channel, 'src/db/RideShare.sqlite', DiscordApiKey, DiscordGuildId)
 
     # create tree object for slash commands
     tree = app_commands.CommandTree(client)
-
-    DiscordGuildId = os.getenv('DiscordGuildId')
 
     # create slash command for start RideShare, passing guild and name and description
     @tree.command(guild = discord.Object(id=DiscordGuildId), name = 'rideshare', description='Start RideShare')
