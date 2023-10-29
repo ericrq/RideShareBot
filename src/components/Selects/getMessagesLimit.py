@@ -1,5 +1,5 @@
 # class for get messages of channel by limit
-class getMessagesLimit:
+class GetMessagesLimit:
     def __init__(self, getChannel):
 
         '''

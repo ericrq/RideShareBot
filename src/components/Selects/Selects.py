@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 
 # import os library
 import os
+from components.Selects.DataProcessing import DataProcessing
 
 # import crud insert
 from db.crud.Insert import Insert
@@ -26,7 +27,7 @@ from db.crud.Update import Update
 from db.crud.SelectWhere import SelectWhere
 
 # import getMessagesLimit
-from components.Selects.getMessagesLimit import getMessagesLimit
+from components.Selects.GetMessagesLimit import GetMessagesLimit
 
 # load environment variables
 load_dotenv()
@@ -103,7 +104,10 @@ class Selects:
         }
 
         # create instance of class getMessagesLimit
-        self.getMessagesLimit = getMessagesLimit(self.channel)
+        self.getMessagesLimit = GetMessagesLimit(self.channel)
+
+        # create instance of class dataProcessing
+        self.dataProcessing = DataProcessing(self.registerData, self.cursor, self.channel)
 
     # create dates
     def createDates(self, month=datetime.date.today().month, year=datetime.date.today().year):
@@ -163,7 +167,7 @@ class Selects:
         await self.editViewReturnDrive()
 
         # call method formatRegisterData for format register data for insert or update
-        await self.formatRegisterData()
+        await self.dataProcessing.formatRegisterData()
 
         # call method createDates passing selected month number and selected year
         self.createDates(month=int(self.selectedMonthNumber), year=int(self.selectedYear))
@@ -217,7 +221,7 @@ class Selects:
         await self.editViewReturnDrive()
 
         # call method formatRegisterData for format register data for insert or update
-        await self.formatRegisterData()
+        await self.dataProcessing.formatRegisterData()
 
         # call method createDates passing selected month number and selected year
         self.createDates(year=int(self.selectedYear), month=int(self.selectedMonthNumber))
@@ -271,7 +275,7 @@ class Selects:
         await self.editViewReturnDrive()
 
         # call method formatRegisterData for format register data for insert or update
-        await self.formatRegisterData()
+        await self.dataProcessing.formatRegisterData()
 
     # create view of going drive select
     def createViewGoingDriveSelect(self):
@@ -303,7 +307,7 @@ class Selects:
         self.registerData['goingDriver'] = interaction.data['values'][0]
 
         # call method formatRegisterData for format register data for insert or update
-        await self.formatRegisterData()
+        await self.dataProcessing.formatRegisterData()
 
         # response interaction defer
         await interaction.response.defer()
@@ -337,7 +341,7 @@ class Selects:
         self.registerData['returnDriver'] = self.selectedReturnDrive = interaction.data['values'][0]
 
         # call method formatRegisterData for format register data for insert or update
-        await self.formatRegisterData()
+        await self.dataProcessing.formatRegisterData()
 
         # response interaction defer
         await interaction.response.defer()
@@ -469,94 +473,6 @@ class Selects:
 
         # send views return drive and text to channel
         await self.channel.send(f"Selecione O Motorista De Volta", view=self.viewReturnDrive)
-
-    async def formatRegisterData(self):
-        # if registerData is not empty, call method insertData or updateData
-        if self.registerData['rideShareDate'] != "" and self.registerData['goingDriver'] != "" and self.registerData['returnDriver'] != "":
-
-            # select data in table RideShare calling class SelectWhere passing table, columns, cursor, whereColumn, whereValue
-            selectData = SelectWhere(
-                table='RideShare',
-                cursor=self.cursor,
-                whereColumn='RideShareDate',
-                whereValue=f"'{self.registerData['rideShareDate']}'"
-            ).getSelectWhere()
-
-            # if selectData is equal to [] means that data not exists in table RideShare then insert data else update data
-            if selectData == []:
-                await self.insertData()
-            else:
-                await self.updateData()
-
-    # insert data method
-    async def insertData(self):
-
-        # try insert data in table RideShare calling class Insert passing table, columns, values, cursor
-        try:
-            # call class Insert passing table, columns, values, cursor
-            Insert(
-                table='RideShare',
-                columns='RideShareDate, goingDrive, returnDrive',
-                values=f"'{self.registerData['rideShareDate']}', '{self.registerData['goingDriver']}', '{self.registerData['returnDriver']}'",
-                cursor=self.cursor
-            )
-
-            # create embed for success message
-            successEmbed = discord.Embed(
-                title='Registro realizado com sucesso',
-                color=0x00ff00
-            )
-
-            # send success message to channel
-            await self.channel.send(embed=successEmbed, delete_after=5)
-
-        # except error
-        except:
-
-            # create embed for error message
-            errorEmbed = discord.Embed(
-                title='Erro ao realizar registro',
-                color=0xff0000
-            )
-
-            # send error message to channel
-            await self.channel.send(embed=errorEmbed, delete_after=5)
-
-    # update data method
-    async def updateData(self):
-
-        # try update data in table RideShare calling class Insert passing table, columns, values, cursor
-        try:
-            # call class Update passing table, columns, values, cursor, whereColumn, whereValue
-            Update(
-                table='RideShare',
-                columns='RideShareDate, goingDrive, returnDrive',
-                values=f"'{self.registerData['rideShareDate']}', '{self.registerData['goingDriver']}', '{self.registerData['returnDriver']}'",
-                cursor=self.cursor,
-                whereColumn='RideShareDate',
-                whereValue=f"'{self.registerData['rideShareDate']}'"
-            )
-
-            # create embed for success message
-            successEmbed = discord.Embed(
-                title='Registro atualizado com sucesso',
-                color=0x00ff00
-            )
-
-            # send success message to channel
-            await self.channel.send(embed=successEmbed, delete_after=5)
-        
-        # except error
-        except:
-
-            # creatte embed for error message
-            errorEmbed = discord.Embed(
-                title='Erro ao atualizar registro',
-                color=0xff0000
-            )
-
-            # send error message to channel
-            await self.channel.send(embed=errorEmbed, delete_after=5)
 
     # get register data
     def getRegisterData(self):
