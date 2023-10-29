@@ -15,16 +15,12 @@ from dotenv import load_dotenv
 
 # import os library
 import os
+
+# import create dates class
+from components.Selects.CreateDates import CreateDates
+
+# import data processing class
 from components.Selects.DataProcessing import DataProcessing
-
-# import crud insert
-from db.crud.Insert import Insert
-
-# import crud update
-from db.crud.Update import Update
-
-# import crud select where
-from db.crud.SelectWhere import SelectWhere
 
 # import getMessagesLimit
 from components.Selects.GetMessagesLimit import GetMessagesLimit
@@ -49,26 +45,23 @@ class Selects:
         # get channel by channel id
         self.channel = client.get_channel(channel)
 
-        # create list of drivers
-        self.driver = os.getenv('DriverNames').split(',')
-        
-        # define locale for language month get by calendar.month_name
-        locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-
-        # create list of last 2 years and current year
-        self.years = [str(year) for year in range(datetime.date.today().year - 2, datetime.date.today().year + 1)]
-
-        # create list of all months name and number
-        self.months = [f"{calendar.month_name[month]} ({str(month).zfill(2)})" for month in range(1, 13)]
+        # create instance of class CreateDates
+        self.createDates = CreateDates()
 
         # get current year and selected year
-        self.selectedYear = datetime.date.today().year
+        self.selectedYear = self.createDates.defineActualYear()
 
         # get current month and selected month
-        self.selectedMonthNumber = datetime.date.today().month
+        self.selectedMonthNumber = self.createDates.defineActualMonth()
 
         # get current date and selected date
-        self.selectedDate = datetime.date.today().strftime("%d/%m/%Y")
+        self.selectedDate = self.createDates.defineActualDate()
+
+        # create dates of select date
+        self.dates = self.createDates.createDates()
+
+        # create list of drivers
+        self.driverNames = os.getenv('DriverNames').split(',')
 
         # get selected going drive
         self.selectedGoingDrive = ""
@@ -81,9 +74,6 @@ class Selects:
 
         # create views of select month
         self.viewMonth = self.createViewMonthSelect()
-
-        # create dates
-        self.createDates()
 
         # create views of select date
         self.viewDate = self.createViewDateSelect()
@@ -109,21 +99,6 @@ class Selects:
         # create instance of class dataProcessing
         self.dataProcessing = DataProcessing(self.registerData, self.cursor, self.channel)
 
-    # create dates
-    def createDates(self, month=datetime.date.today().month, year=datetime.date.today().year):
-
-        # get today date basead in month and year
-        self.today  = datetime.date(year, month, 1)
-
-        # get first day of month
-        self.firstDayOfMonth = self.today.replace(day=1)
-
-        # get last day of month
-        self.lastDayOfMonth = self.today.replace(day=calendar.monthrange(self.today.year, self.today.month)[1])
-
-        # create list of dates
-        self.dates = [day.strftime("%d/%m/%Y") for day in (self.firstDayOfMonth + datetime.timedelta(days=day) for day in range((self.lastDayOfMonth - self.firstDayOfMonth).days + 1)) if day.weekday() < 5]
-
     # create views of select month
     def createViewMonthSelect(self):
 
@@ -131,7 +106,7 @@ class Selects:
         self.monthSelect = discord.ui.Select(
             custom_id="MonthSelect",
             placeholder="Mês Que Deseja Registrar",
-            options=[discord.SelectOption(label=month) for month in self.months]
+            options=[discord.SelectOption(label=month) for month in self.createDates.defineMonths()]
         )
 
         # create view
@@ -170,7 +145,7 @@ class Selects:
         await self.dataProcessing.formatRegisterData()
 
         # call method createDates passing selected month number and selected year
-        self.createDates(month=int(self.selectedMonthNumber), year=int(self.selectedYear))
+        self.dates = self.createDates.createDates(month=int(self.selectedMonthNumber), year=int(self.selectedYear))
 
         # clean edit view of date select
         self.viewDate.clear_items()
@@ -185,7 +160,7 @@ class Selects:
         self.yearSelect = discord.ui.Select(
             custom_id="YearSelect",
             placeholder="Ano Que Deseja Registrar",
-            options=[discord.SelectOption(label=year) for year in self.years]
+            options=[discord.SelectOption(label=year) for year in self.createDates.defineYears()]
         )
 
         # create view
@@ -224,7 +199,7 @@ class Selects:
         await self.dataProcessing.formatRegisterData()
 
         # call method createDates passing selected month number and selected year
-        self.createDates(year=int(self.selectedYear), month=int(self.selectedMonthNumber))
+        self.dates = self.createDates.createDates(year=int(self.selectedYear), month=int(self.selectedMonthNumber))
 
         # clean edit view of date select
         self.viewDate.clear_items()
@@ -284,7 +259,7 @@ class Selects:
         self.goingDriveSelect = discord.ui.Select(
             custom_id="goingDriveSelect",
             placeholder="Motorista De Ida",
-            options=[discord.SelectOption(label=drive) for drive in self.driver]
+            options=[discord.SelectOption(label=drive) for drive in self.driverNames]
         )
 
         # create view
@@ -319,7 +294,7 @@ class Selects:
         self.returnDriveSelect = discord.ui.Select(
             custom_id="returnDriveSelect",
             placeholder="Motorista De Volta",
-            options=[discord.SelectOption(label=drive) for drive in self.driver]
+            options=[discord.SelectOption(label=drive) for drive in self.driverNames]
         )
 
         # create view
@@ -405,7 +380,7 @@ class Selects:
         self.goingDriveSelect = discord.ui.Select(
             custom_id="goingDriveSelect",
             placeholder="Motorista De Ida",
-            options=[discord.SelectOption(label=drive) for drive in self.driver]
+            options=[discord.SelectOption(label=drive) for drive in self.driverNames]
         )
 
         # create view
@@ -442,7 +417,7 @@ class Selects:
         self.returnDriveSelect = discord.ui.Select(
             custom_id="returnDriveSelect",
             placeholder="Motorista De Volta",
-            options=[discord.SelectOption(label=drive) for drive in self.driver]
+            options=[discord.SelectOption(label=drive) for drive in self.driverNames]
         )
 
         # create view
