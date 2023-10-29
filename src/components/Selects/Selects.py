@@ -25,6 +25,9 @@ from db.crud.Update import Update
 # import crud select where
 from db.crud.SelectWhere import SelectWhere
 
+# import getMessagesLimit
+from components.Selects.getMessagesLimit import getMessagesLimit
+
 # load environment variables
 load_dotenv()
 
@@ -98,6 +101,9 @@ class Selects:
             "goingDriver": "",
             "returnDriver": "",
         }
+
+        # create instance of class getMessagesLimit
+        self.getMessagesLimit = getMessagesLimit(self.channel)
 
     # create dates
     def createDates(self, month=datetime.date.today().month, year=datetime.date.today().year):
@@ -196,7 +202,7 @@ class Selects:
         # set selected year
         self.selectedYear = interaction.data['values'][0]
 
-        # get selected year in select component
+        # set selected year in select component
         self.registerData['year'] = interaction.data['values'][0]
 
         # interaction response defer
@@ -340,7 +346,7 @@ class Selects:
     async def editViewDate(self):
 
         # call method getMessagesLimit for get messages of channel
-        messages = await self.getMessagesLimit()
+        messages = await self.getMessagesLimit.getMessagesLimit()
 
         # loop in messages of channel
         for message in messages:
@@ -377,7 +383,7 @@ class Selects:
     async def editViewGoingDrive(self):
 
         # call method getMessagesLimit for get messages of channel
-        messages = await self.getMessagesLimit()
+        messages = await self.getMessagesLimit.getMessagesLimit()
 
         # loop in messages of channel
         for message in messages:
@@ -414,7 +420,7 @@ class Selects:
     async def editViewReturnDrive(self):
 
         # call method getMessagesLimit for get messages of channel
-        messages = await self.getMessagesLimit()
+        messages = await self.getMessagesLimit.getMessagesLimit()
 
         # loop in messages of channel
         for message in messages:
@@ -447,71 +453,19 @@ class Selects:
         # edit view of return drive select
         await messageReturnDrive.edit(view=self.viewReturnDrive)
 
-    # get history messages of channel
-    async def getMessagesLimit(self):
-
-        # set initial limit = 1
-        limit = 1
-
-        # set condition = True
-        condition = True
-
-        # create list of messages
-        messages = []
-
-        # while condition is True
-        while condition:
-
-            # get messages of channel by limit
-            async for message in self.channel.history(limit=limit):
-                
-                # if message content is equal to "Selecione o ano que deseja registrar"
-                if message.content == "Selecione O Ano Que Deseja Registrar":
-
-                    # set condition = False
-                    condition = False
-                    
-                    # break loop
-                    break
-
-            # increment limit
-            limit += 1
-
-        # get messages of channel by limit
-        async for message in self.channel.history(limit=limit):
-
-            # append message in list of messages
-            messages.append(message)
-
-        # return list of messages
-        return messages
-
-    # send views year to channel
-    async def sendViewYear(self):
+    async def sendSelects(self):
 
         # send views year and text to channel
         await self.channel.send(f"Selecione O Ano Que Deseja Registrar", view=self.viewYear)
 
-    # send views return month to channel
-    async def sendViewMonth(self):
-
         # send views month and text to channel
         await self.channel.send(f"Selecione O mês Que Deseja Registrar", view=self.viewMonth)
-
-    # send views return date to channel
-    async def sendViewDate(self):
 
         # send views date and text to channel
         await self.channel.send(f"Selecione A Data Que Deseja Registrar", view=self.viewDate)
 
-    # send views going drive to channel
-    async def sendViewGoingDrive(self):
-
         # send views going drive and text to channel
         await self.channel.send(f"Selecione O Motorista De Ida", view=self.viewGoingDrive)
-
-    # send views return drive to channel
-    async def sendViewReturnDrive(self):
 
         # send views return drive and text to channel
         await self.channel.send(f"Selecione O Motorista De Volta", view=self.viewReturnDrive)

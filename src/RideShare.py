@@ -7,23 +7,17 @@ from dotenv import load_dotenv
 # import os library
 import os
 
-# import locale library
-import locale
-
 # import select ui componets
-from components.Selects import Selects
+from components.Selects.Selects import Selects
 
 # import button ui components
-from components.Buttons import Buttons
+from components.Buttons.SendButtons import SendButtons
 
 # import crud connections
 from db.crud.Connection import Connection
 
 # import crud create table
 from db.crud.CreateTable import CreateTable
-
-# import crud delete by where
-from db.crud.DeleteByWhere import DeleteByWhere
 
 # import app commands from discord library used for slash commands
 from discord import app_commands
@@ -60,9 +54,6 @@ class RideShare(discord.Client):
         # set cursor getting connection passing pathBD
         self.cursor = Connection(self.pathBD).getCursor()
 
-        # define locale for language month get by calendar.month_name
-        locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-
         # create table RideShare calling class CreateTable passing table, columns, cursor
         CreateTable('RideShare', 'RideShareDate TEXT, goingDrive TEXT, returnDrive TEXT', self.cursor)
 
@@ -72,17 +63,13 @@ class RideShare(discord.Client):
         self.Selects =  Selects(self.channel, self, self.cursor)
 
         # create object for button ui components
-        self.Buttons = Buttons(self.channel, self, self.cursor, self.Selects)
+        self.SendButtons = SendButtons(self.channel, self.cursor, self.Selects)
 
-        # send view for select ui componets
-        await self.Selects.sendViewYear()
-        await self.Selects.sendViewMonth()
-        await self.Selects.sendViewDate()
-        await self.Selects.sendViewGoingDrive()
-        await self.Selects.sendViewReturnDrive()
+        # call class for send selects
+        await self.Selects.sendSelects()
 
-        # call class for get result
-        await self.Buttons.sendButtons()
+        # call class for send buttons
+        await self.SendButtons.sendButtons()
 
     # method for run bot
     async def on_ready(self):

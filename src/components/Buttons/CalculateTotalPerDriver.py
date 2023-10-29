@@ -16,6 +16,15 @@ class CalulateTotalPerDriver:
     # constructor
     def __init__(self, cursor, channel, client, month, year, interaction):
 
+        '''
+        cursor: cursor of database
+        channel: channel of discord
+        client: client of discord
+        month: month of ride share
+        year: year of ride share
+        interaction: interaction of discord
+        '''
+
         # set cursor
         self.cursor = cursor
 
@@ -34,14 +43,6 @@ class CalulateTotalPerDriver:
         # set interaction
         self.interaction = interaction
 
-        '''
-        cursor: cursor of database
-        channel: channel of discord
-        client: client of discord
-        month: month of ride share
-        year: year of ride share
-        '''
-
         # call class SelectTotalPerDriver and getSelectTotalPerDriver for return data
         self.getSelectTotalPerDriver = SelectTotalPerDriver(self.cursor, self.month, self.year).getSelectTotalPerDriver()
 
@@ -52,7 +53,6 @@ class CalulateTotalPerDriver:
         if self.getSelectTotalPerDriver == []:
 
             # # send message to channel and delete after 5 seconds
-            # await self.channel.send(f'Não há Dados Registrados Para O Mês De {calendar.month_name[int(self.month)].capitalize()} De {self.year}', delete_after=5)
 
             embed = discord.Embed(
                 title='Não há Dados Registrados',
