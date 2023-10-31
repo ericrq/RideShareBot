@@ -28,7 +28,7 @@ class GetMessagesLimit:
             async for message in self.getChannel.history(limit=limit):
                 
                 # if message content is equal to "Selecione o ano que deseja registrar"
-                if message.content == "Selecione O Ano Que Deseja Registrar":
+                if message.content == "Selecione A Data":
 
                     # set condition = False
                     condition = False

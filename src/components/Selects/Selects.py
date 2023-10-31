@@ -1,15 +1,6 @@
 # import discord library
 import discord
 
-# import calendar library
-import calendar
-
-# import locale library
-import locale
-
-# import datetime library
-import datetime
-
 # import dotenv library
 from dotenv import load_dotenv
 
@@ -25,6 +16,12 @@ from components.Selects.DataProcessing import DataProcessing
 # import getMessagesLimit
 from components.Selects.GetMessagesLimit import GetMessagesLimit
 
+# import going drive class
+from components.Selects.GoingDrive import GoingDrive
+
+# import return drive class
+from components.Selects.ReturnDrive import ReturnDrive
+
 # load environment variables
 load_dotenv()
 
@@ -33,6 +30,7 @@ class Selects:
 
     # constructor
     def __init__(self, channel, client, cursor):
+
         '''
         channel: channel id
         client: discord client
@@ -69,21 +67,6 @@ class Selects:
         # get selected return drive
         self.selectedReturnDrive = ""
 
-        # create views of select year
-        self.viewYear = self.createViewYearSelect()
-
-        # create views of select month
-        self.viewMonth = self.createViewMonthSelect()
-
-        # create views of select date
-        self.viewDate = self.createViewDateSelect()
-
-        # create views of going drive select
-        self.viewGoingDrive = self.createViewGoingDriveSelect()
-
-        # create views of return drive select
-        self.viewReturnDrive = self.createViewReturnDriveSelect()
-
         # get register data
         self.registerData = {
             "year": self.selectedYear,
@@ -93,65 +76,46 @@ class Selects:
             "returnDriver": "",
         }
 
-        # create instance of class getMessagesLimit
-        self.getMessagesLimit = GetMessagesLimit(self.channel)
-
         # create instance of class dataProcessing
         self.dataProcessing = DataProcessing(self.registerData, self.cursor, self.channel)
 
-    # create views of select month
-    def createViewMonthSelect(self):
+        # create instance of class getMessagesLimit
+        self.getMessagesLimit = GetMessagesLimit(self.channel)
 
-        # create select of return month
-        self.monthSelect = discord.ui.Select(
-            custom_id="MonthSelect",
-            placeholder="Mês Que Deseja Registrar",
-            options=[discord.SelectOption(label=month) for month in self.createDates.defineMonths()]
+        # create GoingDrive class
+        self.goingDrive = GoingDrive(
+            driverNames=self.driverNames,
+            selectedGoingDrive=self.selectedGoingDrive,
+            registerData=self.registerData,
+            dataProcessing=self.dataProcessing,
+            getMessagesLimit=self.getMessagesLimit,
+            getChannel=self.channel
         )
 
-        # create view
-        self.viewMonth = discord.ui.View()
+        # create ReturnDrive class
+        self.returnDrive = ReturnDrive(
+            driverNames=self.driverNames,
+            selectedReturnDrive=self.selectedReturnDrive,
+            registerData=self.registerData,
+            dataProcessing=self.dataProcessing,
+            getMessagesLimit=self.getMessagesLimit,
+            getChannel=self.channel
+        )
 
-        # add select to view
-        self.viewMonth.add_item(self.monthSelect)
+        # create views of select date
+        self.viewDate = self.createViewDateSelect()
 
-        # callback of select month
-        self.monthSelect.callback = self.onMonthSelect
+        # create views of select year
+        self.viewYear = self.createViewYearSelect()
 
-        # return view
-        return self.viewMonth
+        # create views of select month
+        self.viewMonth = self.createViewMonthSelect()
 
-    # callback of select month
-    async def onMonthSelect(self, interaction):
+        # create views of going drive select
+        self.viewGoingDrive = self.goingDrive.createViewGoingDriveSelect()
 
-        # get selected month in select component
-        self.selectedMonthData = interaction.data['values'][0]
-
-        # format selected month removing parentheses and getting number
-        self.registerData['month'] = self.selectedMonthNumber = self.selectedMonthData.split(' ')[1][1:-1]
-
-        # interaction response defer
-        await interaction.response.defer()
-
-        # set selected going drive and return drive to empty on change date
-        self.registerData['goingDriver'] = ""
-        self.registerData['returnDriver'] = ""
-
-        # edit view of going drive select for reseting selected going drive
-        await self.editViewGoingDrive()
-        await self.editViewReturnDrive()
-
-        # call method formatRegisterData for format register data for insert or update
-        await self.dataProcessing.formatRegisterData()
-
-        # call method createDates passing selected month number and selected year
-        self.dates = self.createDates.createDates(month=int(self.selectedMonthNumber), year=int(self.selectedYear))
-
-        # clean edit view of date select
-        self.viewDate.clear_items()
-
-        # call method editViewDate for edit view of date select
-        await self.editViewDate()
+        # create views of return drive select
+        self.viewReturnDrive = self.returnDrive.createViewReturnDriveSelect()
 
     # create views of select year
     def createViewYearSelect(self):
@@ -192,8 +156,8 @@ class Selects:
         self.registerData['returnDriver'] = ""
 
         # edit view of going drive select for reseting selected going drive
-        await self.editViewGoingDrive()
-        await self.editViewReturnDrive()
+        await self.goingDrive.editViewGoingDrive()
+        await self.returnDrive.editViewReturnDrive()
 
         # call method formatRegisterData for format register data for insert or update
         await self.dataProcessing.formatRegisterData()
@@ -205,6 +169,60 @@ class Selects:
         self.viewDate.clear_items()
 
         # call editViewMonth for edit view of month select
+        await self.editViewDate()
+
+    # create views of select month
+    def createViewMonthSelect(self):
+
+        # create select of return month
+        self.monthSelect = discord.ui.Select(
+            custom_id="MonthSelect",
+            placeholder="Mês Que Deseja Registrar",
+            options=[discord.SelectOption(label=month) for month in self.createDates.defineMonths()]
+        )
+
+        # create view
+        self.viewMonth = discord.ui.View()
+
+        # add select to view
+        self.viewMonth.add_item(self.monthSelect)
+
+        # callback of select month
+        self.monthSelect.callback = self.onMonthSelect
+
+        # return view
+        return self.viewMonth
+
+    # callback of select month
+    async def onMonthSelect(self, interaction):
+
+        # get selected month in select component
+        self.selectedMonthData = interaction.data['values'][0]
+
+        # format selected month removing parentheses and getting number
+        self.registerData['month'] = self.selectedMonthNumber = self.selectedMonthData.split(' ')[1][1:-1]
+
+        # interaction response defer
+        await interaction.response.defer()
+
+        # set selected going drive and return drive to empty on change date
+        self.registerData['goingDriver'] = ""
+        self.registerData['returnDriver'] = ""
+
+        # edit view of going drive select for reseting selected going drive
+        await self.goingDrive.editViewGoingDrive()
+        await self.returnDrive.editViewReturnDrive()
+
+        # call method formatRegisterData for format register data for insert or update
+        await self.dataProcessing.formatRegisterData()
+
+        # call method createDates passing selected month number and selected year
+        self.dates = self.createDates.createDates(year=int(self.selectedYear), month=int(self.selectedMonthNumber))
+
+        # clean edit view of date select
+        self.viewDate.clear_items()
+
+        # call method editViewDate for edit view of date select
         await self.editViewDate()
 
     # create views of select
@@ -246,80 +264,11 @@ class Selects:
         self.registerData['returnDriver'] = ""
 
         # edit view of going drive select for reseting selected going drive
-        await self.editViewGoingDrive()
-        await self.editViewReturnDrive()
+        await self.goingDrive.editViewGoingDrive()
+        await self.returnDrive.editViewReturnDrive()
 
         # call method formatRegisterData for format register data for insert or update
         await self.dataProcessing.formatRegisterData()
-
-    # create view of going drive select
-    def createViewGoingDriveSelect(self):
-
-        # create select of going drive
-        self.goingDriveSelect = discord.ui.Select(
-            custom_id="goingDriveSelect",
-            placeholder="Motorista De Ida",
-            options=[discord.SelectOption(label=drive) for drive in self.driverNames]
-        )
-
-        # create view
-        self.viewGoingDrive = discord.ui.View()
-
-        # add select to view
-        self.viewGoingDrive.add_item(self.goingDriveSelect)
-
-        # callback of going drive select
-        self.goingDriveSelect.callback = self.onGoingDriveSelect
-
-        # return view
-        return self.viewGoingDrive
-
-    # callback of going drive select
-    async def onGoingDriveSelect(self, interaction):
-
-        self.selectedGoingDrive = interaction.data['values'][0]
-
-        self.registerData['goingDriver'] = interaction.data['values'][0]
-
-        # call method formatRegisterData for format register data for insert or update
-        await self.dataProcessing.formatRegisterData()
-
-        # response interaction defer
-        await interaction.response.defer()
-
-    # create view of return drive select
-    def createViewReturnDriveSelect(self):
-
-        # create select of return drive
-        self.returnDriveSelect = discord.ui.Select(
-            custom_id="returnDriveSelect",
-            placeholder="Motorista De Volta",
-            options=[discord.SelectOption(label=drive) for drive in self.driverNames]
-        )
-
-        # create view
-        self.viewReturnDrive = discord.ui.View()
-
-        # add select to view
-        self.viewReturnDrive.add_item(self.returnDriveSelect)
-
-        # callback of return drive select
-        self.returnDriveSelect.callback = self.onReturnDriveSelect
-
-        # return view
-        return self.viewReturnDrive
-
-    # callback of return drive select
-    async def onReturnDriveSelect(self, interaction):
-
-        # get selected return drive in select component
-        self.registerData['returnDriver'] = self.selectedReturnDrive = interaction.data['values'][0]
-
-        # call method formatRegisterData for format register data for insert or update
-        await self.dataProcessing.formatRegisterData()
-
-        # response interaction defer
-        await interaction.response.defer()
 
     #  edit view of date select
     async def editViewDate(self):
@@ -331,7 +280,7 @@ class Selects:
         for message in messages:
 
             # verify if message content is equal to "Selecione A Data Que Deseja Registrar"
-            if message.content == "Selecione A Data Que Deseja Registrar":
+            if message.content == "Selecione A Data":
 
                 # set message id in variable
                 messageDateId = message.id
@@ -358,90 +307,17 @@ class Selects:
         # edit view of date select
         await messageDateSelect.edit(view=self.viewDate)
 
-    # edit view of going drive select use in buttonDeleteRegisterByDate
-    async def editViewGoingDrive(self):
-
-        # call method getMessagesLimit for get messages of channel
-        messages = await self.getMessagesLimit.getMessagesLimit()
-
-        # loop in messages of channel
-        for message in messages:
-
-            # verify if message content is equal to "Selecione O Motorista De Ida"
-            if message.content == "Selecione O Motorista De Ida":
-
-                # set message id in variable
-                messageGoingDriveId = message.id
-
-        # fetch message by id
-        messageGoingDrive = await self.channel.fetch_message(messageGoingDriveId)
-
-        # create select of going drive
-        self.goingDriveSelect = discord.ui.Select(
-            custom_id="goingDriveSelect",
-            placeholder="Motorista De Ida",
-            options=[discord.SelectOption(label=drive) for drive in self.driverNames]
-        )
-
-        # create view
-        self.viewGoingDrive = discord.ui.View()
-
-        # add select to view
-        self.viewGoingDrive.add_item(self.goingDriveSelect)
-
-        # callback of going drive select
-        self.goingDriveSelect.callback = self.onGoingDriveSelect
-
-        # edit view of going drive select
-        await messageGoingDrive.edit(view=self.viewGoingDrive)
-
-    # edit view of return drive select use in buttonDeleteRegisterByDate
-    async def editViewReturnDrive(self):
-
-        # call method getMessagesLimit for get messages of channel
-        messages = await self.getMessagesLimit.getMessagesLimit()
-
-        # loop in messages of channel
-        for message in messages:
-
-            # verify if message content is equal to "Selecione O Motorista De Volta"
-            if message.content == "Selecione O Motorista De Volta":
-
-                # set message id in variable
-                messageReturnDriveId = message.id
-
-        # fetch message by id
-        messageReturnDrive = await self.channel.fetch_message(messageReturnDriveId)
-
-        # create select of return drive
-        self.returnDriveSelect = discord.ui.Select(
-            custom_id="returnDriveSelect",
-            placeholder="Motorista De Volta",
-            options=[discord.SelectOption(label=drive) for drive in self.driverNames]
-        )
-
-        # create view
-        self.viewReturnDrive = discord.ui.View()
-
-        # add select to view
-        self.viewReturnDrive.add_item(self.returnDriveSelect)
-
-        # callback of return drive select
-        self.returnDriveSelect.callback = self.onReturnDriveSelect
-
-        # edit view of return drive select
-        await messageReturnDrive.edit(view=self.viewReturnDrive)
-
+    # method for send selects
     async def sendSelects(self):
 
         # send views year and text to channel
-        await self.channel.send(f"Selecione O Ano Que Deseja Registrar", view=self.viewYear)
+        await self.channel.send(f"Selecione O Ano", view=self.viewYear)
 
         # send views month and text to channel
-        await self.channel.send(f"Selecione O mês Que Deseja Registrar", view=self.viewMonth)
+        await self.channel.send(f"Selecione O mês", view=self.viewMonth)
 
         # send views date and text to channel
-        await self.channel.send(f"Selecione A Data Que Deseja Registrar", view=self.viewDate)
+        await self.channel.send(f"Selecione A Data", view=self.viewDate)
 
         # send views going drive and text to channel
         await self.channel.send(f"Selecione O Motorista De Ida", view=self.viewGoingDrive)
@@ -454,7 +330,7 @@ class Selects:
 
         # return register data
         return self.registerData
-    
+
     # set register data usage in buttonDeleteRegisterByDate for reseting register data
     def setRegisterData(self):
 

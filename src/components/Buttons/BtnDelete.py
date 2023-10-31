@@ -60,8 +60,8 @@ class BtnDelete:
             return
         
         # call method for edit views usage for reseting views
-        await self.selectInstance.editViewReturnDrive()
-        await self.selectInstance.editViewGoingDrive()
+        await self.selectInstance.goingDrive.editViewGoingDrive()
+        await self.selectInstance.returnDrive.editViewReturnDrive()
 
         # call method for set register data reseting register data
         self.selectInstance.setRegisterData()
