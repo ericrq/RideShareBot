@@ -18,7 +18,7 @@
 
 <div align="justify">
 
-Na Imagem Acima Temos O Bot No Canal Do Discord Onde Tem Componentes Selects Para O Ano, Mês, Data, Motorista De Ida E Motorista De Volta. E Abaixo Temos O Botão Para Obter O Resultado Que Em Formato De Tabela Mostra O Nome Do Motorista, A Quantidade De Vezes Que Digiriu E O Total A Pagar, E O Botão Para Deletar O Registro Pela Data Selecionada.
+Na imagem acima, temos o bot no canal do Discord, onde há componentes de selects para o ano, mês, data, motorista de ida e motorista de volta. Abaixo, temos o botão para obter o resultado que, em formato de tabela, mostra o nome do motorista, a quantidade de vezes que dirigiu e o total a pagar. Também há o botão para deletar o registro pela data selecionada.
 
 </div>
 
