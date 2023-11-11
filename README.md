@@ -16,4 +16,10 @@
 
 ![beforeAndAfterRegister](assets/img/beforeAndAfterRegister.svg)
 
+<div align="justify">
+
+Na Imagem Acima Temos O Bot No Canal Do Discord Onde Tem Componentes Selects Para O Ano, Mês, Data, Motorista De Ida E Motorista De Volta. E Abaixo Temos O Botão Para Obter O Resultado Que Em Formato De Tabela Mostra O Nome Do Motorista, A Quantidade De Vezes Que Digiriu E O Total A Pagar, E O Botão Para Deletar O Registro Pela Data Selecionada.
+
+</div>
+
 </div>
