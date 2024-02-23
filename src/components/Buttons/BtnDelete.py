@@ -2,7 +2,7 @@
 import discord
 
 # import crud delete by where
-from db.crud.DeleteByWhere import DeleteByWhere
+from database.crud.DeleteByWhere import DeleteByWhere
 
 # class for create button delete register by date
 class BtnDelete:

@@ -2,7 +2,8 @@
 import discord
 
 # import Insert class from crud
-from db.crud.Insert import Insert
+from database.crud.Insert import Insert
+
 
 # class InsertData
 class InsertData:
@@ -26,16 +27,15 @@ class InsertData:
         try:
             # call class Insert passing table, columns, values, cursor
             Insert(
-                table='RideShare',
-                columns='RideShareDate, goingDrive, returnDrive',
+                table="RideShare",
+                columns="RideShareDate, goingDrive, returnDrive",
                 values=f"'{self.registerData['rideShareDate']}', '{self.registerData['goingDriver']}', '{self.registerData['returnDriver']}'",
-                cursor=self.cursor
+                cursor=self.cursor,
             )
 
             # create embed for success message
             successEmbed = discord.Embed(
-                title='Registro realizado com sucesso',
-                color=0x00ff00
+                title="Registro realizado com sucesso", color=0x00FF00
             )
 
             # send success message to channel
@@ -46,8 +46,7 @@ class InsertData:
 
             # create embed for error message
             errorEmbed = discord.Embed(
-                title='Erro ao realizar registro',
-                color=0xff0000
+                title="Erro ao realizar registro", color=0xFF0000
             )
 
             # send error message to channel

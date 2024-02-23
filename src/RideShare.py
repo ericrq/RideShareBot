@@ -14,10 +14,10 @@ from components.Selects.Selects import Selects
 from components.Buttons.SendButtons import SendButtons
 
 # import crud connections
-from db.crud.Connection import Connection
+from database.crud.Connection import Connection
 
 # import crud create table
-from db.crud.CreateTable import CreateTable
+from database.crud.CreateTable import CreateTable
 
 # import app commands from discord library used for slash commands
 from discord import app_commands
@@ -112,7 +112,7 @@ if __name__ == "__main__":
 
     # create object for class RideShare passing intents, channel, registerData, pathBD, ApiKey
     client = RideShare(
-        intents, channel, "src/db/RideShare.sqlite", DiscordApiKey, DiscordGuildId
+        intents, channel, "src/database/RideShare.sqlite", DiscordApiKey, DiscordGuildId
     )
 
     # create tree object for slash commands
